@@ -91,8 +91,191 @@ def add_colony(space):
 
     return space
 
+def run(space):
+    """
+    Starts and runs the space
+
+    Starts the space and manages its lifecycle
+    """
+    logging.info("Space %s started.", space[0])
+    while len(space) > 2:
+        # Для каждой колонии в пространстве изменить состояние на один день
+        for col in space[2:]:
+            update(col)
+
+        # Проверить состояние колонии и убрать отмершие
+        for col in space[2:]:
+            if len(col[1]) == 0:
+                space.remove(col)
+                logging.info("Colony #%d deleted as dead from space %s.",
+                             col[0][5], space[0])
+
+        # Проверить колонии на соприкосновение и, по-необходимости,
+        # обЪединить соседние
+        check_intersection(space)
+
+        # Изменить возраст пространства на один день
+        space[1] += 1
+
+        display_space(space)
+
+    logging.info("Space %s disapeared on %d day.", space[0], space[1])
+
+def check_intersection(space):
+    """
+    Checks intersections of the colonies
+
+    Checks intersections of the colonies and if so, unites them
+    """
+    for col1 in space[2:]:
+        for col2 in space[space.index(col1) + 1:]:
+            # isec определяет существование пересечения
+            # если isec == 1, пересечение было по вертикальной оси
+            # если isec == 2, пересечение было по горизонтальной оси
+            isec = 0
+            # Определяем пересечение по вертикальной оси
+            # x1 + w1 == x2 or x1 == x2 + w2
+
+            if ((col1[0][1] + col1[0][3] == col2[0][1]) or 
+                (col1[0][1] == col2[0][1] + col2[0][3])):
+                # y1 >= y2 and y1 + h1 >= y2
+                if ((col1[0][2] >= col2[0] and col1[0][2] + col1[0][4] >= col2[0][2]) or
+                   # y1 <= y2 + h2 and y1 + h1 >= y2 + h2 
+                    (col1[0][2] <= col2[0][2] + col2[0][4] and
+                     col1[0][2] + col1[0][4] >= col2[0][2] + col2[0][4]) or
+                   # y1 <= y2 and y1 + h1 <= y2 + h2
+                    (col1[0][2] <= col2[0][2] and
+                     col1[0][2] + col1[0][4] <= col2[0][2] + col2[0][4])):
+                    logging.debug("Colony #%d and colony #%d intersect " \
+                                  "vertically", 
+                                   col1[0][5], col2[0][5])
+                    isec = 1
+
+            # Определяем пересечение по горизонтальной оси       
+            # y1 == y2 + h2 or y1 + h1 == y2 
+            if (isec == 0 and
+                    (col1[0][2] == col2[0][2] + col2[0][4] or
+                     col1[0][2] + col1[0][4] == col2[0][2])):
+                # x1 >= x2 and x1 + w1 >= x2
+                if ((col1[0][1] >= col2[0][1] and
+                     col1[0][1] + col1[0][3] >= col2[0][1]) or
+                     # x1 <= x2 + w2 and x1 + w1 >= x2
+                    (col1[0][1] <= col2[0][1] + col2[0][3] and
+                     col1[0][1] + col1[0][3] >= col2[0][1]) or
+                    # x1 <= x2 and x1 + w1 <= x2 + w2
+                    (col1[0][1] <= col2[0][1] and
+                     col1[0][1] + col1[0][3] <= col2[0][1] + col2[0][3])):
+                    isec = 2
+                    logging.debug("Colony #%d and colony #%d intersect " \
+                                  "horizontally",
+                                  col1[0][5], col2[0][5])
+
+            # Если колонии соприкасаются по вертикальной оси
+            if isec == 1:
+                # Создать новую колонию помещающую в себя обе объеденяемые
+                # колонии
+                ncol = list([
+                                [ # age = col1.age
+                                col1[0][0],
+                                # x = min(x1, x2)
+                                min(col1[0][1], col2[0][1]),
+                                # y = min(y1, y2)
+                                min(col1[0][2], col2[0][2]),
+                                # w = w1 + w2
+                                col1[0][3] + col2[0][3],
+                                # h = max(y1 + h1, y2 + h2) - min(y1, y2)
+                                max(col1[0][2] + col1[0][4],
+                                    col2[0][2] + col2[0][4])
+                                - min(col1[0][2], col2[0][2]),
+                                # colID = col1.colID
+                                col1[0][5]
+                                ],
+                            list()])
+
+                # Определяем левую и правую колонии 
+                if col1[0][1] < col2[0][1]:
+                    coll = col1
+                    colr = col2
+                else:
+                    coll = col2
+                    colr = col1
+                # Для каждой строчки новой колонии из двух частей правой и
+                # левой фомируем общую строку.
+                # Если првая или левая часть находится в текущей строке цикла, она добавляется как есть.
+                # Если там строки нет, то формируется строка пустых клеток необходимой ширины. 
+                for y in range(ncol[0][4]):
+                    # Сформировать левую сторону строки новой колонии.
+                    if (ncol[0][2] + y >= coll[0][2] and
+                        ncol[0][2] + y <= coll[0][2] + coll[0][4]):
+                        lpart = coll[1][ncol[0][2] + y - coll[0][2]]
+                    else:
+                        lpart = [[0, [0 for j in range(8)]] for i in range(coll[0][3])]
+                    
+                    # Сформировать правую сторону строки новой колонии.
+                    if (ncol[0][2] + y >= colr[0][2] and
+                        ncol[0][2] + y <= colr[0][2] + colr[0][4]):
+                        rpart = colr[1][ncol[0][2] + y - colr[0][2]]
+                    else:
+                        rpart = [[0, [0 for j in range(8)]] for i in range(colr[0][3])]
+                    
+                    ncol[1].append(lpart + rpart)
+
+            # Если колонии соприкасаются по горизонтальной оси
+            if isec == 2:
+                # Создать новую колонию помещающую в себя обе объеденяемые
+                # колонии
+                ncol = list([ 
+                                [ # age = col1.age
+                                col1[0][0],
+                                # x = min(x1, x2)
+                                min(col1[0][1], col2[0][1]),
+                                # y = min(y1, y2)
+                                min(col1[0][2], col2[0][2]),
+                                # w = max(x1 + w1, x2 + w2) - min(x1, x2)
+                                max(col1[0][1] + col1[0][3], col2[0][1] + col2[0][3])
+                                - min(col1[0][1], col2[0][1]),                                    
+                                # h = h1 + h2
+                                col1[0][4] + col2[0][4],
+                                # colID = col1.colID
+                                col1[0][5]
+                                ],
+                            list()])
+
+                # Для всех записей новой колонии делаем следующее:
+                #  - проверяем какой колонии принадлежит текущая строка
+                #  - берем всю строку из активной колонии 
+                #  - если строка начинается не с начала новой колонии, то
+                #    дополняем ее необходимым количеством пустых клеток
+                #    слева
+                #  - если ширина строки меньше чем ширина новой колонии,
+                #    то дополняем ее необходимым количеством пустых клеток
+                #    справа
+                for y in range(ncol[0][4]):
+                    if (ncol[0][2] + y >= col1[0][2] and
+                        ncol[0][2] + y <= col1[0][2] + col1[0][4]):
+                        colp = col1
+                    else:
+                        colp = col2
+
+                    nrow = colp[1][ncol[0][2] + y - colp[0][2]]
+                    for i in range(colp[0][1] - ncol[0][1]):
+                        nrow.insert(0, [0, [0 for j in range(8)]])
+                    nrow += [[0, [0 for j in range(8)]] 
+                                    for i in range(ncol[0][1]
+                                                    + ncol[0][3]
+                                                    - colp[0][1]
+                                                    + colp[0][3])]
+                    
+                    ncol[1].append(nrow)                        
+
+            if isec == 1 or isec == 2:
+                logging.info("New colony created instead of colony #%d and " \
+                             "colony#%d.", col1[0][5], col2[0][5])
+                space[space.index(col1)] = ncol
+                space.remove(col2)
 
 
+                    
 def display_space(space):
     """
     Displays information about the space
