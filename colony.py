@@ -33,7 +33,7 @@
 #  ----
 #
 # Данные о колонии представлены списком
-# [[age, x, y, w, h], [row1, row2, row3, row4]]
+# [[age, x, y, w, h, colID], [row1, row2, row3, row4]]
 # Если возвраст колонии больше 0, то добавлять новые строки клеток в 
 # нее уже нельзя.
 # Каждая строчка представляется списком клеток
@@ -52,6 +52,7 @@
 
 import random
 import sys
+import logging
 
 ###############################################################################
 # Space functions
@@ -63,10 +64,10 @@ def new_space(name):
     Retruns empty list of colonies of space.
     """
     if name == "":
-        print("ERR: Empty colony names aren't allowed.\n")
+        logging.critical("Empty colony names aren't allowed.\n")
         sys.exit()
 
-    print("DEBUG: New space created with name", name, "\n")
+    logging.info("New space created with name [%s]", name)
 
     return list([name, 0])
 
@@ -84,8 +85,9 @@ def add_colony(space):
     space.append(list([list([0,
                              int(random.random()*1000000),
                              int(random.random()*1000000),
-                             0, 0]),
+                             0, 0, len(space) - 2]),
                        list()]))
+    logging.info("An empty colony added to the space [%s]", space[0])
 
     return space
 
@@ -127,13 +129,14 @@ def load_row(colony, new_row):
     For example "000100100"
     """
     if colony[0][0] > 0:
-        print("ERR: Colony already changed. Adding new rows is prohibited.\n")
+        logging.error("Colony already changed. Adding new rows is prohibited.")
         return
     if len(new_row) == 0:
-        print("ERR: Will not add empty rows in colony.\n")
+        logging.error("Will not add empty rows in a living colony.\n")
         return
     if len(set(new_row) - {'1','0'}) > 0:
-        print("ERR: Only 0 and 1 are allowed in row string.\n")
+        logging.error("Only 0 and 1 are allowed in row string. Got [%s]\n",
+                      new_row)
         return
     
     # Если длина новой строки больше чем текущая ширина колонии, дополнить все
@@ -142,6 +145,10 @@ def load_row(colony, new_row):
         for row in colony[1]:
             for i in range(len(new_row) - colony[0][3]):
                 row.append(list([0, [0 for j in range(8)]]))
+        logging.debug("Colony #%d width was expanded from %d to %d.", 
+                      colony[0][5], 
+                      colony[0][3],
+                      len(new_row))
         colony[0][3] = len(new_row)
 
     # Создаем новую строку, соответсвущую new_row
@@ -152,15 +159,22 @@ def load_row(colony, new_row):
         else:
             age = 1
         nrow.append(list([age, [0 for j in range(8)]]))
+    logging.debug("New row was created from [%s] for colony #%d", new_row,
+                  colony[0][5])
 
     # По-необходимости дополняем новую строку пустыми клетками до текущей
     # ширины колонии
     if len(new_row) < colony[0][3]:
         for i in range(colony[0][3] - len(new_row)):
             nrow.append(list([0, [0 for j in range(8)]]))
+        logging.debug(
+            "Newly created row [%s] was expanded to %d length for colony #%d", 
+            new_row, colony[0][3], colony[0][5])
 
     # Добавить новую строку в колонию
     colony[1].append(nrow)
+    logging.info("Newly created row [%s] was added to the colony #%d at %d", 
+                 new_row, colony[0][5], colony[0][4])
     colony[0][4] += 1
 
 
@@ -201,6 +215,11 @@ def main():
     Adds three empty colony to it
     Displays the space info
     """
+    logging.basicConfig(filename="lifecells.log",
+                        level=logging.DEBUG,
+                        format="%(asctime)s [%(levelname)s] : %(message)s")
+  
+   
     space = new_space("Universe")
     for i in range(3):
         space = add_colony(space)
