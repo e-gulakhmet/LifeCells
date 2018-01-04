@@ -103,10 +103,6 @@ def next_day(space):
     Updates all the colonies of the space
     """
     logging.debug("Changing day for space %s...", space[0])
-    # Для каждой колонии в пространстве изменить состояние на один день
-    for col in space[2:]:
-        update(col)
-
     # Проверить состояние колонии и убрать отмершие
     for col in space[2:]:
         if len(col[1]) == 0:
@@ -114,13 +110,17 @@ def next_day(space):
             logging.info("Colony #%d deleted as dead from space %s.",
                             col[0][5], space[0])
 
+    # Для каждой колонии в пространстве изменить состояние на один день
+    for col in space[2:]:
+        update(col)
+
     # Проверить колонии на соприкосновение и, по-необходимости,
     # обЪединить соседние
     check_intersection(space)
 
     # Изменить возраст пространства на один день
     space[1] += 1
-    logging.info("For space %s setted %d day.", space[0], space[1])
+    logging.info("For the space [%s] %d day is set.", space[0], space[1])
 
 
 
@@ -317,13 +317,8 @@ def update(col):
     if col[0][0] == 0:
         col_init(col)
 
-    if len(col[1]) == 0:
-        logging.info("Colony #%d is empty. Skipped...", col[0][5])
-        return
-
     logging.debug("Checking neighbourhood for every cell...")
     # Обновить информацию по соседям для каждой клетки
-    print(col)
     for y, row in enumerate(col[1]):
         for x, c in enumerate(row):
             # Проверяем северное направление.
@@ -438,6 +433,9 @@ def col_init(col):
         logging.info("There are no live cells in the colony #%d. " \
                      "Will be cleared.", col[0][5])                         
         col[1] = []
+        col[0][1] = 0
+        col[0][2] = 0
+        return -1, -1
 
     logging.debug("Remove %d leading empty rows.", minY)
     for row in range(minY):
