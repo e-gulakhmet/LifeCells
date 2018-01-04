@@ -10,8 +10,7 @@
 # space = [space_name, age, col1, col2, col3, ...]
 # 
 # Правила возникновения, смерти либо жизни клеток:
-#     - если у клетки два соседа, то она продолжает жить
-#     - если у клетки три и более соседей, то она умирает от тесноты
+#     - если у клетки более трех соседей, то она умирает от тесноты
 #     - если у клетки менее двух соседей, то она умирает от одиночества
 #     - если у пустой клетки три соседа, то в ней возникает жизнь
 #  
@@ -53,6 +52,7 @@
 import random
 import sys
 import logging
+from functools import reduce
 
 ###############################################################################
 # Space functions
@@ -82,14 +82,47 @@ def add_colony(space):
 
     Returns updated space
     """
-    space.append(list([list([0,
-                             int(random.random()*1000000),
-                             int(random.random()*1000000),
-                             0, 0, len(space) - 2]),
-                       list()]))
+    space.append([
+                  [0,
+                   int(random.random()*1000),
+                   int(random.random()*1000),
+                   0, 0, len(space) - 2
+                  ],
+                  []
+                 ])
     logging.info("An empty colony added to the space [%s]", space[0])
 
     return space
+
+
+
+def next_day(space):
+    """
+    Sets new day for the space
+
+    Updates all the colonies of the space
+    """
+    logging.debug("Changing day for space %s...", space[0])
+    # Для каждой колонии в пространстве изменить состояние на один день
+    for col in space[2:]:
+        update(col)
+
+    # Проверить состояние колонии и убрать отмершие
+    for col in space[2:]:
+        if len(col[1]) == 0:
+            space.remove(col)
+            logging.info("Colony #%d deleted as dead from space %s.",
+                            col[0][5], space[0])
+
+    # Проверить колонии на соприкосновение и, по-необходимости,
+    # обЪединить соседние
+    check_intersection(space)
+
+    # Изменить возраст пространства на один день
+    space[1] += 1
+    logging.info("For space %s setted %d day.", space[0], space[1])
+
+
 
 def run(space):
     """
@@ -99,24 +132,7 @@ def run(space):
     """
     logging.info("Space %s started.", space[0])
     while len(space) > 2:
-        # Для каждой колонии в пространстве изменить состояние на один день
-        for col in space[2:]:
-            update(col)
-
-        # Проверить состояние колонии и убрать отмершие
-        for col in space[2:]:
-            if len(col[1]) == 0:
-                space.remove(col)
-                logging.info("Colony #%d deleted as dead from space %s.",
-                             col[0][5], space[0])
-
-        # Проверить колонии на соприкосновение и, по-необходимости,
-        # обЪединить соседние
-        check_intersection(space)
-
-        # Изменить возраст пространства на один день
-        space[1] += 1
-
+        next_day(space)
         display_space(space)
 
     logging.info("Space %s disapeared on %d day.", space[0], space[1])
@@ -291,15 +307,170 @@ def display_space(space):
 ###############################################################################
 # Colony functions
 ###############################################################################
-def update(colony):
+def update(col):
     """
     Updates colony
 
     Updates cells of the colony on every step
     """
-    pass
+    logging.debug("Start updating colony #%s...", col[0][5])
+    if col[0][0] == 0:
+        col_init(col)
 
+    if len(col[1]) == 0:
+        logging.info("Colony #%d is empty. Skipped...", col[0][5])
+        return
 
+    logging.debug("Checking neighbourhood for every cell...")
+    # Обновить информацию по соседям для каждой клетки
+    print(col)
+    for y, row in enumerate(col[1]):
+        for x, c in enumerate(row):
+            # Проверяем северное направление.
+            if y == 0:
+                c[1][0] = 0
+            elif col[1][y - 1][x][0] != 0:
+                c[1][0] = 1
+            else:
+                c[1][0] = 0
+            # Проверяем северо-восторчное направление.
+            if y == 0 or x == col[0][3] - 1:
+                c[1][1] = 0
+            elif col[1][y - 1][x + 1][0] != 0:
+                c[1][1] = 1
+            else:
+                c[1][1] = 0
+            # Проверяем восточное направление.
+            if x == col[0][3] - 1:
+                c[1][2] = 0
+            elif col[1][y][x + 1][0] != 0:
+                c[1][2] = 1
+            else:
+                c[1][2] = 0
+            # Проверяем юго-восточное направление.
+            if x == col[0][3] - 1 or y == col[0][4] - 1:
+                c[1][3] = 0
+            elif col[1][y + 1][x + 1][0] != 0:
+                c[1][3] = 1
+            else:
+                c[1][3] = 0
+            # Проверяем южное направление.
+            if y == col[0][4] - 1:
+                c[1][4] = 0
+            elif col[1][y + 1][x][0] != 0:
+                c[1][4] = 1
+            else:
+                c[1][4] = 0
+            # Проверяем юго-западное направление.
+            if y == col[0][4] - 1 or x == 0:
+                c[1][5] = 0
+            elif col[1][y + 1][x - 1][0] != 0:
+                c[1][5] = 1
+            else:
+                c[1][5] = 0
+            # Проверяем западное направление.
+            if x == 0:
+                c[1][6] = 0
+            elif col[1][y][x - 1][0] != 0:
+                c[1][6] = 1
+            else:
+                c[1][6] = 0
+            # Проверяем северо-западное направление.
+            if y == 0 or x == 0:
+                c[1][7] = 0
+            elif col[1][y - 1][x - 1][0] != 0:
+                c[1][7] = 1
+            else:
+                c[1][7] = 0
+
+    logging.debug("Updating cells...")
+    # Определить новый статус каждой клетки
+    for y, row in enumerate(col[1]):
+        for x, c in enumerate(row):
+            nCnt = reduce(lambda x, y: x + y, c[1])
+            if c[0] == 0 and nCnt == 3:
+                c[0] = 1
+            elif c[0] > 0:
+                if nCnt > 3:
+                    c[0] = 0
+                elif nCnt < 2:
+                    c[0] = 0
+                else:
+                    c[0] += 1
+
+    minX, minY = col_init(col)
+
+    logging.debug("Setting new coordinates for the colony")
+    # Определяем новые координаты и возраст колонии
+    if minX == 0:
+        col[0][1] -= 1
+    if minY == 0:
+        col[0][2] -= 1
+    if minX > 1:
+        col[0][1] += minX - 1
+    if minY > 1:
+        col[0][2] += minY - 1
+    col[0][0] += 1
+    logging.info("Colony #%d has dimension [%d, %d, %d, %d].", 
+                 col[0][5], col[0][1], col[0][2], col[0][3], col[0][4])
+    
+def col_init(col):
+    """
+    Initializes the colony
+
+    Removes all extra empty cells from the colony and adds empty borders  
+    """        
+    logging.debug("Start formatting colony #%d...", col[0][5])
+    minX, maxX, minY, maxY = col[0][3], 0, col[0][4], 0
+    for y, row in enumerate(col[1]):
+        for x, cell in enumerate(row):
+            if cell[0] != 0:
+                if maxX < x:
+                    maxX = x
+                if minX > x:
+                    minX = x
+                if maxY < y:
+                    maxY = y
+                if minY > y:
+                    minY = y
+
+    if minX > maxX:
+        logging.info("There are no live cells in the colony #%d. " \
+                     "Will be cleared.", col[0][5])                         
+        col[1] = []
+
+    logging.debug("Remove %d leading empty rows.", minY)
+    for row in range(minY):
+        col[1].pop(0)
+
+    logging.debug("Remove %d trailing empty rows.", col[0][4] - maxY - 1)
+    for row in range(col[0][4] - maxY - 1):
+        col[1].pop()
+
+    col[0][4] = maxY - minY + 1
+    logging.debug("Real heigth of the colony is %d.", col[0][4])
+
+    for i, row in enumerate(col[1]):
+        for c in range(minX):
+            row.pop(0)
+        for c in range(col[0][3] - maxX - 1):
+            row.pop()
+
+    col[0][3] = maxX - minX + 1
+    logging.debug("Real width of the colony is %d.", col[0][3])
+
+    ecell = [0, [0 for i in range(8)]]
+    
+    col[1].insert(0, [ecell for i in range(col[0][3])])
+    col[1].append([ecell for i in range(col[0][3])])
+    col[0][4] += 2
+
+    for row in col[1]:
+        row.insert(0, ecell)
+        row.append(ecell)
+    col[0][3] += 2
+
+    return minX, minY
 
 def load_row(colony, new_row):
     """
@@ -416,7 +587,7 @@ def main():
     for sf in col1:
         load_row(space[2], sf)
 
-    display_space(space)
+    run(space)
 
 
 ###############################################################################
