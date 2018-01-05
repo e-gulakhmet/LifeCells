@@ -132,6 +132,22 @@ def run():
                         v_shift = -10
                     else:
                         v_shift = -1
+                elif event.key == pygame.K_RIGHT:
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        h_shift = -10
+                    else:
+                        h_shift = -1
+                elif event.key == pygame.K_LEFT:
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        h_shift = -10
+                    else:
+                        h_shift = - 1
+                elif event.key == pygame.K_DOWN:
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        v_shift = -10
+                    else:
+                        v_shift = - 1
+ 
                 
         # --- Game logic should go here
     
