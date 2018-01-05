@@ -73,7 +73,7 @@ def new_space(name):
 
 
 
-def add_colony(space):
+def add_colony(space, col_mask = [], x = -1, y = -1):
     """
     Add an empty colony to the space
 
@@ -82,15 +82,22 @@ def add_colony(space):
 
     Returns updated space
     """
+    if x == -1:
+        x = int(random.random()*1000)
+    if y == -1:
+        y = int(random.random()*1000)
     space.append([
                   [0,
-                   int(random.random()*1000),
-                   int(random.random()*1000),
+                   x,
+                   y,
                    0, 0, len(space) - 2
                   ],
                   []
                  ])
     logging.info("An empty colony added to the space [%s]", space[0])
+
+    for r in col_mask:
+        load_row(space[len(space) - 1], r)
 
     return space
 
@@ -114,6 +121,19 @@ def next_day(space):
     for col in space[2:]:
         update(col)
 
+    # расширить пространство, если колония имеет отрицательные координаты
+    for col in space[2:]:
+        if col[0][1] == -1:
+            for ccol in space[2:]:
+                if col != ccol:
+                    ccol[0][1] += 1
+            col[0][1] = 0         
+        if col[0][2] == -1:
+            for ccol in space[2:]:
+                if col != ccol:
+                    ccol[0][2] += 1
+            col[0][2] = 0         
+        
     # Проверить колонии на соприкосновение и, по-необходимости,
     # обЪединить соседние
     check_intersection(space)
@@ -124,16 +144,17 @@ def next_day(space):
 
 
 
-def run(space):
+def run(space, days = 1000):
     """
     Starts and runs the space
 
     Starts the space and manages its lifecycle
     """
     logging.info("Space %s started.", space[0])
-    while len(space) > 2:
+    while len(space) > 2 and days > 0 :
         next_day(space)
         display_space(space)
+        days -= 1
 
     logging.info("Space %s disapeared on %d day.", space[0], space[1])
 
@@ -143,6 +164,9 @@ def check_intersection(space):
 
     Checks intersections of the colonies and if so, unites them
     """
+    if len(space) - 2 <= 1:
+        return
+
     for col1 in space[2:]:
         for col2 in space[space.index(col1) + 1:]:
             # isec определяет существование пересечения
@@ -152,10 +176,11 @@ def check_intersection(space):
             # Определяем пересечение по вертикальной оси
             # x1 + w1 == x2 or x1 == x2 + w2
 
-            if ((col1[0][1] + col1[0][3] == col2[0][1]) or 
-                (col1[0][1] == col2[0][1] + col2[0][3])):
+            if ((col1[0][0] >= 0 and col2[0][0] >= 0) and 
+                ((col1[0][1] + col1[0][3] == col2[0][1]) or 
+                 (col1[0][1] == col2[0][1] + col2[0][3]))):
                 # y1 >= y2 and y1 + h1 >= y2
-                if ((col1[0][2] >= col2[0] and col1[0][2] + col1[0][4] >= col2[0][2]) or
+                if ((col1[0][2] >= col2[0][2] and col1[0][2] + col1[0][4] >= col2[0][2]) or
                    # y1 <= y2 + h2 and y1 + h1 >= y2 + h2 
                     (col1[0][2] <= col2[0][2] + col2[0][4] and
                      col1[0][2] + col1[0][4] >= col2[0][2] + col2[0][4]) or
@@ -222,14 +247,14 @@ def check_intersection(space):
                 for y in range(ncol[0][4]):
                     # Сформировать левую сторону строки новой колонии.
                     if (ncol[0][2] + y >= coll[0][2] and
-                        ncol[0][2] + y <= coll[0][2] + coll[0][4]):
+                        ncol[0][2] + y <= coll[0][2] + coll[0][4] - 1):
                         lpart = coll[1][ncol[0][2] + y - coll[0][2]]
                     else:
                         lpart = [[0, [0 for j in range(8)]] for i in range(coll[0][3])]
                     
                     # Сформировать правую сторону строки новой колонии.
                     if (ncol[0][2] + y >= colr[0][2] and
-                        ncol[0][2] + y <= colr[0][2] + colr[0][4]):
+                        ncol[0][2] + y <= colr[0][2] + colr[0][4] - 1):
                         rpart = colr[1][ncol[0][2] + y - colr[0][2]]
                     else:
                         rpart = [[0, [0 for j in range(8)]] for i in range(colr[0][3])]
@@ -288,7 +313,10 @@ def check_intersection(space):
                 logging.info("New colony created instead of colony #%d and " \
                              "colony#%d.", col1[0][5], col2[0][5])
                 space[space.index(col1)] = ncol
-                space.remove(col2)
+                col2[0][0] = -1 # Пометить колонию на удаление
+
+    # Удалить все колонии, помеченные на удаление
+    space[2:] = list(filter(lambda c: c[0][0] >= 0, space[2:]))
 
 
                     
@@ -428,6 +456,8 @@ def col_init(col):
                     maxY = y
                 if minY > y:
                     minY = y
+    logging.debug( "minX, maxX, minY, max: [%d, %d, %d, %d]",
+                  minX, maxX, minY, maxY)
 
     if minX > maxX:
         logging.info("There are no live cells in the colony #%d. " \
@@ -457,16 +487,16 @@ def col_init(col):
     col[0][3] = maxX - minX + 1
     logging.debug("Real width of the colony is %d.", col[0][3])
 
-    ecell = [0, [0 for i in range(8)]]
-    
-    col[1].insert(0, [ecell for i in range(col[0][3])])
-    col[1].append([ecell for i in range(col[0][3])])
+    col[1].insert(0, [[0, [0 for i in range(8)]] for i in range(col[0][3])])
+    col[1].append([[0, [0 for i in range(8)]] for i in range(col[0][3])])
     col[0][4] += 2
 
     for row in col[1]:
-        row.insert(0, ecell)
-        row.append(ecell)
+        row.insert(0, [0, [0 for i in range(8)]])
+        row.append([0, [0 for i in range(8)]])
     col[0][3] += 2
+    logging.info("Size of the colony #%d after initialization is [%d, %d].",
+                 col[0][5], col[0][3], col[0][4])
 
     return minX, minY
 
@@ -570,11 +600,8 @@ def main():
     logging.basicConfig(filename="lifecells.log",
                         level=logging.DEBUG,
                         format="%(asctime)s [%(levelname)s] : %(message)s")
-  
-   
+     
     space = new_space("Universe")
-    for i in range(3):
-        space = add_colony(space)
 
     col1 = ["00111",
             "011011",
@@ -582,10 +609,13 @@ def main():
             "011011",
             "00111"]
 
-    for sf in col1:
-        load_row(space[2], sf)
+    col2 = ["111"]
 
-    run(space)
+    space = add_colony(space, col1)
+    space = add_colony(space, col2)
+
+    run(space, 12)
+
 
 
 ###############################################################################
