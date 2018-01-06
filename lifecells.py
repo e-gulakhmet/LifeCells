@@ -147,6 +147,7 @@ def run():
                         v_shift = -10
                     else:
                         v_shift = - 1
+
  
                 
         # --- Game logic should go here
@@ -172,7 +173,7 @@ def run():
             active_col = len(space) -3
     
         # --- Limit to 60 frames per second
-        clock.tick(1)
+        clock.tick(60)
     
     # Close the window and quit.
     pygame.quit()   
