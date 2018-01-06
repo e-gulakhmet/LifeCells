@@ -8,14 +8,21 @@
 
 import logging
 import pygame
+import pygame.locals
 import colony
 
+# Define some colors
+C_HDR_TEXT   = (   0,   0,   0)
+C_VAL_TEXT   = ( 255, 255, 255)
+C_SPLIT_LINE = (   0, 255,   0)
+C_BKGROUND   = (   0,   0,   0)
 
 
-def grp_init():
+
+
+def grp_init(size):
     pygame.init()
 
-    size=[700, 500]
     screen=pygame.display.set_mode(size)
     pygame.display.set_caption("Life Cells demonstration")
 
@@ -57,8 +64,14 @@ def draw_col(screen, x, y, col):
               (0, 115, 0),
               (0, 95, 0),
              ]
-    x = int((70 - col[0][3])/2)
-    y = int((50 - col[0][4])/2)
+
+    # pygame.draw.rect(screen, 
+    #                  C_BKGROUND, 
+    #                  (x * 10 + 5, 
+    #                   y * 10 + 5, 
+    #                   (col[0][3] + x) * 10 + 5,
+    #                   (col[0][4] + y) * 10 + 5))
+
     for yy, row in enumerate(col[1]):
         for xx, cell in enumerate(row):
             if cell[0] != 0:
@@ -71,25 +84,116 @@ def draw_col(screen, x, y, col):
 
 
 def run():
-    
+    # active colony
+    active_col = 0
+
+    # viewPort shift
+    v_shift, h_shift = 0, 0
+
+
+    size = [700, 500]
+
     space = init_space()
 
-    screen = grp_init()
+    screen = grp_init(size)
 
     clock = pygame.time.Clock()
-
-    # Define some colors
-    c_headerTxt      = (   0,   0,   0)
-    c_valueTxt       = ( 255, 255, 255)
-    c_splitLine      = (   0, 255,   0)
-    c_bkGround       = (   0,   0,   0)
-    c_cells         = [(),
-                       ()
-                      ] 
+    # space day change speed
+    # it could be:
+    #       - slow   ( 1 day per 5 seconds)
+    #       - normal ( 1 day per second) 
+    #       - fast   ( 5 days per second)
+    speed_steps = (5000, 1000, 200) # time in milliseconds to change a day
+    curr_speed = 1
+    pygame.time.set_timer(pygame.USEREVENT, speed_steps[curr_speed])
     
 
-    font = pygame.font.Font(None, 25)
- 
+    done = False
+    newDay = False
+    # -------- Main Program Loop -----------
+    while not done:
+
+        # --- Main event loop
+        for event in pygame.event.get():
+            if event.type == pygame.USEREVENT:
+                newDay = True
+
+            if event.type == pygame.QUIT:
+                done = True
+                continue
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p: # select previous colony as active
+                    active_col -= 1
+                    if active_col < 0:
+                        active_col = 0
+                elif event.key == pygame.K_n: # select next colony as active
+                    active_col += 1
+                    if active_col > len(space) - 3:
+                        active_col = len(space) - 3
+                elif event.key == pygame.K_q: # quit 
+                    done = True
+                    continue
+                elif event.key == pygame.K_UP:   # shift viewport up
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        v_shift = -10
+                    else:
+                        v_shift = -1
+                elif event.key == pygame.K_RIGHT: # shift viewport right
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        h_shift = -10
+                    else:
+                        h_shift = -1
+                elif event.key == pygame.K_LEFT: # shift viewport left
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        h_shift = -10
+                    else:
+                        h_shift = - 1
+                elif event.key == pygame.K_DOWN: # shift viewport down
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        v_shift = -10
+                    else:
+                        v_shift = - 1
+                elif event.key == pygame.K_s:   # make speed slower
+                    if curr_speed > 0:
+                        curr_speed -= 1
+                        pygame.time.set_timer(pygame.USEREVENT, speed_steps[curr_speed])
+                elif event.key == pygame.K_f:   # make speed faster
+                    if curr_speed < 2:
+                        curr_speed += 1
+                        pygame.time.set_timer(pygame.USEREVENT, speed_steps[curr_speed])
+
+
+        # --- Game logic should go here
+
+        # --- Screen-clearing code goes here
+
+        # Here, we clear the screen to white. Don't put other drawing commands
+        # above this, or they will be erased with this command.
+
+        # If you want a background image, replace this clear with blit'ing the
+        # background image.
+        
+
+        # --- Drawing code should go here
+        if newDay:
+            colony.next_day(space)
+            if active_col > len(space) - 3:
+                active_col = len(space) - 3
+            screen.fill(C_BKGROUND)
+            x = int((size[0]/10 - space[2 + active_col][0][3])/2)
+            y = int((size[1]/10 - space[2 + active_col][0][4])/2)
+            draw_col(screen, x, y, space[2 + active_col])
+            newDay = False
+
+        # --- Go ahead and update the screen with what we've drawn.
+        pygame.display.flip()
+
+        # --- Limit to 60 frames per second
+        clock.tick(60)
+
+    #font = pygame.font.Font(None, 25)
+
     # Воспроизвести текст. "True" значит,
     # что текст будет сглаженным (anti-aliased).
     # Чёрный - цвет. Переменную black мы задали ранее,
@@ -97,86 +201,12 @@ def run():
     # Заметьте: эта строка создаёт картинку с буквами,
     # но пока не выводит её на экран.
     # text = font.render("My text", True, c_valueTxt)
-    
+
     # Вывести сделанную картинку на экран в точке (250, 250)
     # screen.blit(text, [250,250])
 
-    active_col = 0
-
-    v_shift, h_shift = 0, 0
-
-    done = False
-    # -------- Main Program Loop -----------
-    while not done:
-
-        # --- Main event loop
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-                continue
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    active_col -= 1
-                    if active_col < 0:
-                        active_col = 0
-                elif event.key == pygame.K_n:
-                    active_col += 1
-                    if active_col > len(space) - 3:
-                        active_col = len(space) - 3
-                elif event.key == pygame.K_q:
-                    done = True
-                    continue
-                elif event.key == pygame.K_UP:
-                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        v_shift = -10
-                    else:
-                        v_shift = -1
-                elif event.key == pygame.K_RIGHT:
-                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        h_shift = -10
-                    else:
-                        h_shift = -1
-                elif event.key == pygame.K_LEFT:
-                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        h_shift = -10
-                    else:
-                        h_shift = - 1
-                elif event.key == pygame.K_DOWN:
-                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        v_shift = -10
-                    else:
-                        v_shift = - 1
-
- 
-                
-        # --- Game logic should go here
-    
-        # --- Screen-clearing code goes here
-    
-        # Here, we clear the screen to white. Don't put other drawing commands
-        # above this, or they will be erased with this command.
-    
-        # If you want a background image, replace this clear with blit'ing the
-        # background image.
-        screen.fill(c_bkGround)
-    
-        # --- Drawing code should go here
-        draw_col(screen, 0, 0, space[2 + active_col])
-    
-        # --- Go ahead and update the screen with what we've drawn.
-        pygame.display.flip()
-
-        colony.next_day(space)
-
-        if active_col > len(space) - 3:
-            active_col = len(space) -3
-    
-        # --- Limit to 60 frames per second
-        clock.tick(60)
-    
     # Close the window and quit.
-    pygame.quit()   
+    pygame.quit()
 
 
 
