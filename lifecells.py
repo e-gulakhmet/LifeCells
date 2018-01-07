@@ -1,10 +1,13 @@
 # lifecells.py
 # 
 # Графическое представление жизни колонии клеток из библиотеки colony.py
-# 
 #
+# EnesGUL12, dr-dobermann, 2018.
 #
+# https://github.com/EnesGUL12/LifeCells.git
 #
+# viewport - Подвижная лупа через которую смотрят на space.
+# viewport = [space, x, y, w, h]
 
 import logging
 import pygame
@@ -21,17 +24,32 @@ C_BKGROUND   = (   0,   0,   0)
 
 
 def grp_init(size):
+    """
+    Initializes Graphics.
+
+    Pygame initialize. Creates application window.
+
+    Returns screen - main surface of application.
+    """
     pygame.init()
 
     screen=pygame.display.set_mode(size)
     pygame.display.set_caption("Life Cells demonstration")
+    logging.debug("Graphics initialized")
 
     return screen
 
 
 
-def init_space():
-    space = colony.new_space("Universe")
+def init_space(name = "Universe"):
+    """
+    Creates space.
+
+    Creates empty space and adds two colonies.
+
+    Returns newly created space.
+    """
+    space = colony.new_space(name)
 
     col1 = ["00111",
             "011011",
@@ -43,8 +61,11 @@ def init_space():
 
     space = colony.add_colony(space, col1)
     space = colony.add_colony(space, col2)
+    logging.debug("Space [%s] created", name)
 
     return space
+
+
 
 def draw_col(screen, x, y, col):
     """
@@ -87,6 +108,40 @@ def draw_col(screen, x, y, col):
 
 
 # TODO: Add scrollable viewport for the space
+def viewport_init(space, active_col, size):
+    """
+    Creates viewport for space.
+
+    Creates viewport for space and set it over active colony.
+
+    Returns viewport.
+    """
+    if len(space) > 2:
+        # Найти центр активной колонии
+        #       xc = col_x + col_w / 2
+        #       yc = col_y + col_h / 2
+        x = space[2 + active_col][0][1] + space[2 + active_col][0][3] / 2
+        y = space[2 + active_col][0][2] + space[2 + active_col][0][4] / 2
+        # Найти левый-верхний край viewport
+        #       xv = xc - vport_w / 2
+        #       yv = yc - vport_h / 2
+        x -= size[0] / 2
+        y -= size[1] / 2
+        # Проверить положительность координат левого-верхнего угла viewport
+        # если они отрицательные дать им нулевые значения
+        if x < 0:
+            x = 0
+        if y < 0:
+            y = 0 
+    else:
+        x, y = 0, 0
+    logging.debug("Viewport for space %s created [%d, %d, %d, %d]", space[0], x, y, size[0], size[1])
+
+    return [space, x, y, size[0], size[1]]
+
+
+
+
 # TODO: Add scrollbars on the right and bottom side of the screen
 # TODO: Make screen size dynamic
 # TODO: Add minimap in left-bottom angle of the screen 
@@ -98,6 +153,11 @@ def draw_col(screen, x, y, col):
 
 
 def run():
+    """
+    Executes application.
+
+    Creates context of application and runs event loop processing
+    """
     # active colony
     active_col = 0
 
@@ -192,11 +252,15 @@ def run():
         # --- Drawing code should go here
         if newDay:
             colony.next_day(space)
+            if len(space) < 3:
+                done = True
+                continue
             if active_col > len(space) - 3:
                 active_col = len(space) - 3
             screen.fill(C_BKGROUND)
             x = int((size[0]/10 - space[2 + active_col][0][3])/2)
             y = int((size[1]/10 - space[2 + active_col][0][4])/2)
+            # TODO: Draw all colonies which are in viewport      
             draw_col(screen, x, y, space[2 + active_col])
             newDay = False
 

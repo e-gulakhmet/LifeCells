@@ -666,8 +666,8 @@ def main():
 
     col2 = ["111"]
 
-    space = add_colony(space, col1, 10, 10)
-    space = add_colony(space, col2, 12, 12)
+    space = add_colony(space, col1)
+    space = add_colony(space, col2)
 
     run(space, 12)
 
