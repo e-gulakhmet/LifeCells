@@ -79,7 +79,21 @@ def draw_col(screen, x, y, col):
                     cIdx = 0
                 else:
                     cIdx = cell[0]
-                pygame.draw.circle(screen, c_Cell[cIdx], ((x + xx)*10 + 5, (y + yy)*10 + 5), 5)
+                pygame.draw.circle(screen,
+                                   c_Cell[cIdx],
+                                   ((x + xx)*10 + 5, (y + yy)*10 + 5),
+                                   5)
+
+
+
+# TODO: Add scrollable viewport for the space
+# TODO: Add scrollbars on the right and bottom side of the screen
+# TODO: Make screen size dynamic
+# TODO: Add minimap in left-bottom angle of the screen 
+#       with viewport and colonies representation
+# TODO: Add positioning of an active colony in the viewport center
+#       on Space-key hit
+# TODO: Add statistics on screen
 
 
 

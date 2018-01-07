@@ -1,5 +1,9 @@
 # colony.py
-# 
+#
+# EnesGUL12, dr-dobermann, 2018.
+#
+# https://github.com/EnesGUL12/LifeCells.git
+#
 # Решение задачи "Клетки жизни" из книги Чарльза Уэзэрел
 #
 # В Пространстве существуют Колонии Клеток.
@@ -8,12 +12,12 @@
 # в прежнем, постарев на один день.
 # Данные Пространства представляются в виде списка колоний
 # space = [space_name, age, col1, col2, col3, ...]
-# 
+#
 # Правила возникновения, смерти либо жизни клеток:
 #     - если у клетки более трех соседей, то она умирает от тесноты
 #     - если у клетки менее двух соседей, то она умирает от одиночества
 #     - если у пустой клетки три соседа, то в ней возникает жизнь
-#  
+#
 # Если в колонии не осталось живых клеток она исчезает из пространаства.
 # Соприкосающиеся колонии сливаются в одну. Более старшая колония остается,
 # а младщая передает ей все клетки и исчезает из пространства.
@@ -33,7 +37,7 @@
 #
 # Данные о колонии представлены списком
 # [[age, x, y, w, h, colID], [row1, row2, row3, row4]]
-# Если возвраст колонии больше 0, то добавлять новые строки клеток в 
+# Если возвраст колонии больше 0, то добавлять новые строки клеток в
 # нее уже нельзя.
 # Каждая строчка представляется списком клеток
 # row = [cell1, cell2, cell3, cell4, ...]
@@ -48,6 +52,9 @@
 # Если клетка пустая то ее возраст равен 0
 # Номера соседних клеток начинаются с северного направления и далее по
 # часовой стрелке.
+
+# TODO: Add creating a space from a space_file
+
 
 import random
 import sys
@@ -79,6 +86,8 @@ def add_colony(space, col_mask = [], x = -1, y = -1):
 
     Creates an empty colony at random coordinates and
     adds it to the space.
+    If col_mask is not empty, fills the colony according
+    to given mask.
 
     Returns updated space
     """
@@ -107,7 +116,9 @@ def next_day(space):
     """
     Sets new day for the space
 
-    Updates all the colonies of the space
+    Updates all the colonies of the space.
+    Removes dead colonies from the space.
+    Updates the age of the space.
     """
     logging.debug("Changing day for space %s...", space[0])
     # Проверить состояние колонии и убрать отмершие
@@ -115,7 +126,10 @@ def next_day(space):
         if len(col[1]) == 0:
             space.remove(col)
             logging.info("Colony #%d deleted as dead from space %s.",
-                            col[0][5], space[0])
+                         col[0][5], space[0])
+
+    # TODO: Перед первым днем проверить колонии на совпадения и 
+    #       раздвинуть их по необходимости
 
     # Для каждой колонии в пространстве изменить состояние на один день
     for col in space[2:]:
@@ -148,7 +162,7 @@ def run(space, days = 1000):
     """
     Starts and runs the space
 
-    Starts the space and manages its lifecycle
+    Starts the space and manages its lifecycle for given amount of days
     """
     logging.info("Space %s started.", space[0])
     while len(space) > 2 and days > 0 :
@@ -158,11 +172,15 @@ def run(space, days = 1000):
 
     logging.info("Space %s disapeared on %d day.", space[0], space[1])
 
+
+
 def check_intersection(space):
     """
     Checks intersections of the colonies
 
-    Checks intersections of the colonies and if so, unites them
+    Checks intersections of the colonies and if so, unites them.
+    The older colony inherits all the cell of the younger one.
+    The younger one is disappeared from the space.
     """
     if len(space) - 2 <= 1:
         return
@@ -173,39 +191,41 @@ def check_intersection(space):
             # если isec == 1, пересечение было по вертикальной оси
             # если isec == 2, пересечение было по горизонтальной оси
             isec = 0
-            # Определяем пересечение по вертикальной оси
+            # Определить пересечение по вертикальной оси
             # x1 + w1 == x2 or x1 == x2 + w2
-
-            if ((col1[0][0] >= 0 and col2[0][0] >= 0) and 
-                ((col1[0][1] + col1[0][3] == col2[0][1]) or 
-                 (col1[0][1] == col2[0][1] + col2[0][3]))):
+            if ((col1[0][0] >= 0 and col2[0][0] >= 0)
+                and ((col1[0][1] + col1[0][3] == col2[0][1])
+                or (col1[0][1] == col2[0][1] + col2[0][3]))):
                 # y1 >= y2 and y1 + h1 >= y2
-                if ((col1[0][2] >= col2[0][2] and col1[0][2] + col1[0][4] >= col2[0][2]) or
+                if ((col1[0][2] >= col2[0][2]
+                     and col1[0][2] + col1[0][4] >= col2[0][2])
                    # y1 <= y2 + h2 and y1 + h1 >= y2 + h2 
-                    (col1[0][2] <= col2[0][2] + col2[0][4] and
-                     col1[0][2] + col1[0][4] >= col2[0][2] + col2[0][4]) or
+                    or (col1[0][2] <= col2[0][2] + col2[0][4]
+                        and col1[0][2] + col1[0][4] >= col2[0][2] + col2[0][4])
                    # y1 <= y2 and y1 + h1 <= y2 + h2
-                    (col1[0][2] <= col2[0][2] and
-                     col1[0][2] + col1[0][4] <= col2[0][2] + col2[0][4])):
+                    or (col1[0][2] <= col2[0][2]
+                        and col1[0][2] + col1[0][4]
+                            <= col2[0][2] + col2[0][4])):
                     logging.debug("Colony #%d and colony #%d intersect " \
                                   "vertically", 
                                    col1[0][5], col2[0][5])
                     isec = 1
 
-            # Определяем пересечение по горизонтальной оси       
+            # Определить пересечение по горизонтальной оси       
             # y1 == y2 + h2 or y1 + h1 == y2 
-            if (isec == 0 and
-                    (col1[0][2] == col2[0][2] + col2[0][4] or
-                     col1[0][2] + col1[0][4] == col2[0][2])):
+            if (isec == 0
+                and (col1[0][2] == col2[0][2] + col2[0][4]
+                     or col1[0][2] + col1[0][4] == col2[0][2])):
                 # x1 >= x2 and x1 + w1 >= x2
-                if ((col1[0][1] >= col2[0][1] and
-                     col1[0][1] + col1[0][3] >= col2[0][1]) or
+                if ((col1[0][1] >= col2[0][1]
+                     and col1[0][1] + col1[0][3] >= col2[0][1])
                      # x1 <= x2 + w2 and x1 + w1 >= x2
-                    (col1[0][1] <= col2[0][1] + col2[0][3] and
-                     col1[0][1] + col1[0][3] >= col2[0][1]) or
+                     or (col1[0][1] <= col2[0][1] + col2[0][3]
+                         and col1[0][1] + col1[0][3] >= col2[0][1])
                     # x1 <= x2 and x1 + w1 <= x2 + w2
-                    (col1[0][1] <= col2[0][1] and
-                     col1[0][1] + col1[0][3] <= col2[0][1] + col2[0][3])):
+                     or (col1[0][1] <= col2[0][1]
+                         and col1[0][1] + col1[0][3]
+                             <= col2[0][1] + col2[0][3])):
                     isec = 2
                     logging.debug("Colony #%d and colony #%d intersect " \
                                   "horizontally",
@@ -213,7 +233,7 @@ def check_intersection(space):
 
             # Если колонии соприкасаются по вертикальной оси
             if isec == 1:
-                # Создать новую колонию помещающую в себя обе объеденяемые
+                # Создать новую колонию, помещающую в себя обе объеденяемые
                 # колонии
                 ncol = list([
                                 [ # age = col1.age
@@ -233,7 +253,7 @@ def check_intersection(space):
                                 ],
                             list()])
 
-                # Определяем левую и правую колонии 
+                # Определить левую и правую колонии 
                 if col1[0][1] < col2[0][1]:
                     coll = col1
                     colr = col2
@@ -241,9 +261,11 @@ def check_intersection(space):
                     coll = col2
                     colr = col1
                 # Для каждой строчки новой колонии из двух частей правой и
-                # левой фомируем общую строку.
-                # Если првая или левая часть находится в текущей строке цикла, она добавляется как есть.
-                # Если там строки нет, то формируется строка пустых клеток необходимой ширины. 
+                # левой сфомировать общую строку.
+                # Если првая или левая часть находится в текущей строке цикла,
+                # добавить ее как есть.
+                # Если там строки нет, то сформировать строку пустых клеток
+                # необходимой ширины. 
                 for y in range(ncol[0][4]):
                     # Сформировать левую сторону строки новой колонии.
                     if (ncol[0][2] + y >= coll[0][2] and
@@ -282,14 +304,14 @@ def check_intersection(space):
                                 ],
                             list()])
 
-                # Для всех записей новой колонии делаем следующее:
-                #  - проверяем какой колонии принадлежит текущая строка
-                #  - берем всю строку из активной колонии 
+                # Для всех записей новой колонии сделать следующее:
+                #  - проверить какой колонии принадлежит текущая строка
+                #  - взять всю строку из активной колонии 
                 #  - если строка начинается не с начала новой колонии, то
-                #    дополняем ее необходимым количеством пустых клеток
+                #    дополнить ее необходимым количеством пустых клеток
                 #    слева
                 #  - если ширина строки меньше чем ширина новой колонии,
-                #    то дополняем ее необходимым количеством пустых клеток
+                #    то дополнить ее необходимым количеством пустых клеток
                 #    справа
                 for y in range(ncol[0][4]):
                     if (ncol[0][2] + y >= col1[0][2] and
@@ -313,7 +335,7 @@ def check_intersection(space):
                 logging.info("New colony created instead of colony #%d and " \
                              "colony#%d.", col1[0][5], col2[0][5])
                 space[space.index(col1)] = ncol
-                col2[0][0] = -1 # Пометить колонию на удаление
+                col2[0][0] = -1 # Пометить более молодую колонию на удаление
 
     # Удалить все колонии, помеченные на удаление
     space[2:] = list(filter(lambda c: c[0][0] >= 0, space[2:]))
@@ -324,7 +346,7 @@ def display_space(space):
     """
     Displays information about the space
 
-    Displays detailed information about every colony in the space
+    Displays detailed information about space and every colony in the space
     """
     print("Space [", space[0], "] of age [", space[1], "] consists of ",
           len(list(space))-2, " colonies.\n",
@@ -349,56 +371,56 @@ def update(col):
     # Обновить информацию по соседям для каждой клетки
     for y, row in enumerate(col[1]):
         for x, c in enumerate(row):
-            # Проверяем северное направление.
+            # Проверить северное направление.
             if y == 0:
                 c[1][0] = 0
             elif col[1][y - 1][x][0] != 0:
                 c[1][0] = 1
             else:
                 c[1][0] = 0
-            # Проверяем северо-восторчное направление.
+            # Проверить северо-восторчное направление.
             if y == 0 or x == col[0][3] - 1:
                 c[1][1] = 0
             elif col[1][y - 1][x + 1][0] != 0:
                 c[1][1] = 1
             else:
                 c[1][1] = 0
-            # Проверяем восточное направление.
+            # Проверить восточное направление.
             if x == col[0][3] - 1:
                 c[1][2] = 0
             elif col[1][y][x + 1][0] != 0:
                 c[1][2] = 1
             else:
                 c[1][2] = 0
-            # Проверяем юго-восточное направление.
+            # Проверить юго-восточное направление.
             if x == col[0][3] - 1 or y == col[0][4] - 1:
                 c[1][3] = 0
             elif col[1][y + 1][x + 1][0] != 0:
                 c[1][3] = 1
             else:
                 c[1][3] = 0
-            # Проверяем южное направление.
+            # Проверить южное направление.
             if y == col[0][4] - 1:
                 c[1][4] = 0
             elif col[1][y + 1][x][0] != 0:
                 c[1][4] = 1
             else:
                 c[1][4] = 0
-            # Проверяем юго-западное направление.
+            # Проверить юго-западное направление.
             if y == col[0][4] - 1 or x == 0:
                 c[1][5] = 0
             elif col[1][y + 1][x - 1][0] != 0:
                 c[1][5] = 1
             else:
                 c[1][5] = 0
-            # Проверяем западное направление.
+            # Проверить западное направление.
             if x == 0:
                 c[1][6] = 0
             elif col[1][y][x - 1][0] != 0:
                 c[1][6] = 1
             else:
                 c[1][6] = 0
-            # Проверяем северо-западное направление.
+            # Проверить северо-западное направление.
             if y == 0 or x == 0:
                 c[1][7] = 0
             elif col[1][y - 1][x - 1][0] != 0:
@@ -424,7 +446,7 @@ def update(col):
     minX, minY = col_init(col)
 
     logging.debug("Setting new coordinates for the colony")
-    # Определяем новые координаты и возраст колонии
+    # Определить новые координаты и возраст колонии
     if minX == 0:
         col[0][1] -= 1
     if minY == 0:
@@ -437,11 +459,16 @@ def update(col):
     logging.info("Colony #%d has dimension [%d, %d, %d, %d].", 
                  col[0][5], col[0][1], col[0][2], col[0][3], col[0][4])
     
+
+
 def col_init(col):
     """
     Initializes the colony
 
-    Removes all extra empty cells from the colony and adds empty borders  
+    Removes all extra empty cells from sides of the colony and adds empty
+    borders around updated colony
+
+    Returns minX and minY of the colony before adding empty borders
     """        
     logging.debug("Start formatting colony #%d...", col[0][5])
     minX, maxX, minY, maxY = col[0][3], 0, col[0][4], 0
@@ -500,12 +527,15 @@ def col_init(col):
 
     return minX, minY
 
+
+
+
 def load_row(colony, new_row):
     """
     Loads one cells row to the colony
 
-    Loads one cell row to the colony and updates its borders.
-    row represent a string with '0' in place of empty cell and 
+    Loads one cells row to the colony and updates colony width accordingly.
+    Row represent a string with '0' in place of empty cell and 
     '1' in place of live cell
 
     For example "000100100"
@@ -533,7 +563,7 @@ def load_row(colony, new_row):
                       len(new_row))
         colony[0][3] = len(new_row)
 
-    # Создаем новую строку, соответсвущую new_row
+    # Создать новую строку, соответсвущую new_row
     nrow = list()
     for pos in new_row:
         if pos == "0":
@@ -544,7 +574,7 @@ def load_row(colony, new_row):
     logging.debug("New row was created from [%s] for colony #%d", new_row,
                   colony[0][5])
 
-    # По-необходимости дополняем новую строку пустыми клетками до текущей
+    # По необходимости дополнить новую строку пустыми клетками до текущей
     # ширины колонии
     if len(new_row) < colony[0][3]:
         for i in range(colony[0][3] - len(new_row)):
@@ -594,8 +624,8 @@ def main():
     Programm entry point
 
     Constructs an empty space
-    Adds three empty colony to it
-    Displays the space info
+    Adds colonies to it
+    Runs the space life cycle
     """
     logging.basicConfig(filename="lifecells.log",
                         level=logging.DEBUG,
