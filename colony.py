@@ -128,8 +128,8 @@ def next_day(space):
             logging.info("Colony #%d deleted as dead from space %s.",
                          col[0][5], space[0])
 
-    # TODO: Перед первым днем проверить колонии на совпадения и 
-    #       раздвинуть их по необходимости
+    # Перед первым днем проверить колонии на совпадения и 
+    # раздвинуть их по необходимости
     if space[1] == 0:
         for col1 in space[2:]:
             for col2 in space[2:]:
@@ -247,8 +247,8 @@ def check_intersection(space):
                      or (col1[0][1] <= col2[0][1] + col2[0][3]
                          and col1[0][1] + col1[0][3] >= col2[0][1]
                                                         + col2[0][3])
-                    # x1 <= x2 and x1 + w1 <= x2 + w2
-                     or (col1[0][1] <= col2[0][1]
+                    # x1 >= x2 and x1 + w1 <= x2 + w2
+                     or (col1[0][1] >= col2[0][1]
                          and col1[0][1] + col1[0][3]
                              <= col2[0][1] + col2[0][3])):
                     isec = 2
