@@ -136,14 +136,14 @@ def next_day(space):
                 if col1 != col2:
                     # ((x1 <= x2 and x1 + w1 >= x2) 
                     #  or (x1 >= x2 and x1 <= x2 + w2))
-                    # and ((y1 <= y2 and y1 + h1 <= y2)
+                    # and ((y1 <= y2 and y1 + h1 >= y2)
                     #      or (y1 >= y2 and y1 <= y2 + h2))
                     if (((col1[0][1] <= col2[0][1] 
                         and col1[0][1] + col1[0][3] >= col2[0][1])
                         or (col1[0][1] >= col2[0][1] 
                             and col1[0][1] <= col2[0][1] + col2[0][3]))
                         and ((col1[0][2] <= col2[0][2]
-                            and col1[0][2] + col1[0][4] <= col2[0][2])
+                            and col1[0][2] + col1[0][4] >= col2[0][2])
                             or (col1[0][2] >= col2[0][2]
                                 and col1[0][2] <= col2[0][2] + col2[0][4]))):
                         # x2 = x2 + w1 + w2
@@ -240,12 +240,13 @@ def check_intersection(space):
             if (isec == 0
                 and (col1[0][2] == col2[0][2] + col2[0][4]
                      or col1[0][2] + col1[0][4] == col2[0][2])):
-                # x1 >= x2 and x1 + w1 >= x2
-                if ((col1[0][1] >= col2[0][1]
+                # x1 <= x2 and x1 + w1 >= x2
+                if ((col1[0][1] <= col2[0][1]
                      and col1[0][1] + col1[0][3] >= col2[0][1])
-                     # x1 <= x2 + w2 and x1 + w1 >= x2
+                     # x1 <= x2 + w2 and x1 + w1 >= x2 + w2
                      or (col1[0][1] <= col2[0][1] + col2[0][3]
-                         and col1[0][1] + col1[0][3] >= col2[0][1])
+                         and col1[0][1] + col1[0][3] >= col2[0][1]
+                                                        + col2[0][3])
                     # x1 <= x2 and x1 + w1 <= x2 + w2
                      or (col1[0][1] <= col2[0][1]
                          and col1[0][1] + col1[0][3]
