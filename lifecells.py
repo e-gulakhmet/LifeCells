@@ -7,7 +7,11 @@
 # https://github.com/EnesGUL12/LifeCells.git
 #
 # viewport - Подвижная лупа через которую смотрят на space.
-# viewport = [space, x, y, w, h]
+# viewport = [space, screen, x, y, w, h, offset]
+# space - Пространство которое мы наблюдаем
+# screen - Эктран на котором мы рисуем
+# x, y, w, h, - Начальные кардинаты и размеры viewport (еденица измерения в клетках)
+# offset - Отступы в точках от границ экрана
 
 import logging
 import pygame
@@ -20,6 +24,8 @@ C_VAL_TEXT   = ( 255, 255, 255)
 C_SPLIT_LINE = (   0, 255,   0)
 C_BKGROUND   = (   0,   0,   0)
 
+# Размер одной клетки
+CELL_SIZE = 10
 
 
 
@@ -108,11 +114,17 @@ def draw_col(screen, x, y, col):
 
 
 # TODO: Add scrollable viewport for the space
-def viewport_init(space, active_col, size):
+def viewport_init(space, active_col, screen, offset):
     """
     Creates viewport for space.
 
     Creates viewport for space and set it over active colony.
+
+    Parameters:
+      space      - Space the viewport linked to
+      active_col - index of active colony to view in the viewport
+      screen     - screen to draw viewport on
+      offset     - offset from edges of display (north, east, south, west)
 
     Returns viewport.
     """
@@ -120,13 +132,21 @@ def viewport_init(space, active_col, size):
         # Найти центр активной колонии
         #       xc = col_x + col_w / 2
         #       yc = col_y + col_h / 2
-        x = space[2 + active_col][0][1] + space[2 + active_col][0][3] / 2
-        y = space[2 + active_col][0][2] + space[2 + active_col][0][4] / 2
+        x = int(space[2 + active_col][0][1] + space[2 + active_col][0][3] / 2)
+        y = int(space[2 + active_col][0][2] + space[2 + active_col][0][4] / 2)
+        # Получить размеры экрана
+        s_rect = screen.get_rect()
+        # Отнять отступы (offsets)
+        w = s_rect.w - offset[1] - offset[3]
+        h = s_rect.h - offset[0] - offset[2]
+        # Разделить на размер одной клетки
+        w = int(w / CELL_SIZE)
+        h = int(h / CELL_SIZE)
         # Найти левый-верхний край viewport
         #       xv = xc - vport_w / 2
         #       yv = yc - vport_h / 2
-        x -= size[0] / 2
-        y -= size[1] / 2
+        x -= int(w / 2)
+        y -= int(h / 2)
         # Проверить положительность координат левого-верхнего угла viewport
         # если они отрицательные дать им нулевые значения
         if x < 0:
@@ -135,10 +155,9 @@ def viewport_init(space, active_col, size):
             y = 0 
     else:
         x, y = 0, 0
-    logging.debug("Viewport for space %s created [%d, %d, %d, %d]", space[0], x, y, size[0], size[1])
+    logging.debug("Viewport for space %s created [%d, %d, %d, %d]", space[0], x, y, w, h)
 
-    return [space, x, y, size[0], size[1]]
-
+    return [space, screen, x, y, w, h, offset]
 
 
 
@@ -152,13 +171,42 @@ def viewport_init(space, active_col, size):
 
 
 
+def draw_vport(vport):
+    """
+    Draw viewport.
+
+    Draw viewport for space.
+    """
+    pass
+
+
+
+def get_space_size(space):
+    """
+    Get spase size.
+
+    Get space size with help colonies
+    """
+    w, h = 0, 0 
+    for col in space[2:]:
+        # Если xс + wс > ws, присвоить ws значение xс + wс
+        if col[0][1] + col[0][3] > w:
+            w = col[0][1] + col[0][3]
+        # Если yс + hс > hs, присвоить hs значение yс + hс
+        if col[0][2] + col[0][4] > h:
+            h = col[0][2] + col[0][4]
+        
+    return w, h
+
+
+
 def run():
     """
     Executes application.
 
     Creates context of application and runs event loop processing
     """
-    # active colony
+    # Индекс активной колонии. Viewport будет центрироваться на эту колонию.
     active_col = 0
 
     # viewPort shift
@@ -170,6 +218,8 @@ def run():
     space = init_space()
 
     screen = grp_init(size)
+
+    vport = viewport_init(space, active_col, screen, (40, 30, 30, 0))
 
     clock = pygame.time.Clock()
     # space day change speed
@@ -184,6 +234,7 @@ def run():
 
     done = False
     newDay = False
+    w, h = 0, 0
     # -------- Main Program Loop -----------
     while not done:
 
@@ -210,24 +261,24 @@ def run():
                     continue
                 elif event.key == pygame.K_UP:   # shift viewport up
                     if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        v_shift = -10
+                        v_shift -= 10
                     else:
-                        v_shift = -1
+                        v_shift -= 1
                 elif event.key == pygame.K_RIGHT: # shift viewport right
                     if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        h_shift = -10
+                        h_shift += 10
                     else:
-                        h_shift = -1
+                        h_shift += 1
                 elif event.key == pygame.K_LEFT: # shift viewport left
                     if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        h_shift = -10
+                        h_shift -= 10
                     else:
-                        h_shift = - 1
+                        h_shift -= 1
                 elif event.key == pygame.K_DOWN: # shift viewport down
                     if pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        v_shift = -10
+                        v_shift += 10
                     else:
-                        v_shift = - 1
+                        v_shift += 1
                 elif event.key == pygame.K_s:   # make speed slower
                     if curr_speed > 0:
                         curr_speed -= 1
@@ -239,6 +290,29 @@ def run():
 
 
         # --- Game logic should go here
+        # Если сдвиг по вертикали(v_shift) либо по горизонтали(h_shift) не равен нулю,
+        # сдвинуть viewport на необходимое количество клеток
+        # [space, screen, x, y, w, h, offset]
+        if v_shift != 0 or h_shift != 0:
+            w, h = get_space_size(space)
+        if v_shift != 0:
+            vport[3] += v_shift
+            if vport[3] < 0:
+                vport[3] = 0
+            if vport[3] + vport[5] > h:
+                vport[3] = h - vport[5]
+        if h_shift != 0:
+            vport[2] += h_shift
+            if vport[2] < 0:
+                vport[2] = 0
+            if vport[2] + vport[4] > w:
+                vport[2] = w - vport[4]
+        
+            
+
+
+
+
 
         # --- Screen-clearing code goes here
 
