@@ -171,13 +171,17 @@ def viewport_init(space, active_col, screen, offset):
 
 
 
-def draw_vport(vport):
+def draw_vport(vport, size):
     """
     Draw viewport.
 
     Draw viewport for space.
     """
-    pass
+    surf = vport[1].subsurface(Rect(vport[6][3], vport[6][0],
+                                    size[0]- vport[6][3] - vport[6][1],
+                                    size[1] - vport[6][0] - vport[6][2]))
+    for col in vport[0][2:]:
+        pass
 
 
 
@@ -212,7 +216,7 @@ def run():
     # viewPort shift
     v_shift, h_shift = 0, 0
 
-
+    # size хранит текушие размеры окна приложения в точках [w, h]
     size = [700, 500]
 
     space = init_space()
@@ -290,6 +294,15 @@ def run():
 
 
         # --- Game logic should go here
+        if newDay:
+            colony.next_day(space)
+            if len(space) < 3:
+                done = True
+                continue
+            if active_col > len(space) - 3:
+                active_col = len(space) - 3
+            newDay = False
+
         # Если сдвиг по вертикали(v_shift) либо по горизонтали(h_shift) не равен нулю,
         # сдвинуть viewport на необходимое количество клеток
         # [space, screen, x, y, w, h, offset]
@@ -315,7 +328,7 @@ def run():
 
 
         # --- Screen-clearing code goes here
-
+        screen.fill(C_BKGROUND)
         # Here, we clear the screen to white. Don't put other drawing commands
         # above this, or they will be erased with this command.
 
@@ -324,19 +337,9 @@ def run():
         
 
         # --- Drawing code should go here
-        if newDay:
-            colony.next_day(space)
-            if len(space) < 3:
-                done = True
-                continue
-            if active_col > len(space) - 3:
-                active_col = len(space) - 3
-            screen.fill(C_BKGROUND)
-            x = int((size[0]/10 - space[2 + active_col][0][3])/2)
-            y = int((size[1]/10 - space[2 + active_col][0][4])/2)
-            # TODO: Draw all colonies which are in viewport      
-            draw_col(screen, x, y, space[2 + active_col])
-            newDay = False
+
+        # TODO: Draw all colonies which are in viewport      
+        draw_vport(vport, size)
 
         # --- Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
