@@ -177,11 +177,79 @@ def draw_vport(vport, size):
 
     Draw viewport for space.
     """
-    surf = vport[1].subsurface(Rect(vport[6][3], vport[6][0],
-                                    size[0]- vport[6][3] - vport[6][1],
-                                    size[1] - vport[6][0] - vport[6][2]))
+    c_Cell = [
+              (0, 75, 0),
+              (0, 255, 0),
+              (0, 235, 0),
+              (0, 215, 0),
+              (0, 195, 0),
+              (0, 175, 0),
+              (0, 155, 0),
+              (0, 135, 0),
+              (0, 115, 0),
+              (0, 95, 0),
+             ]
+
+    surf = vport[1].subsurface(
+            pygame.Rect(vport[6][3], vport[6][0],
+                        size[0]- vport[6][3] - vport[6][1],
+                        size[1] - vport[6][0] - vport[6][2]))
+
     for col in vport[0][2:]:
-        pass
+        # Проверить попадание левого нижнего угла колонии во viewport
+        # (xc <= xv + wv - 1 and xc >= xv) and (yc + hc - 1 >= yv and yc + hc - 1 <= yv + hv - 1)
+        if (((col[0][1] <= vport[2] + vport[4] - 1 and col[0][1] >= vport[2])
+             and (col[0][2] + col[0][4] - 1 >= vport[3] 
+                  and col[0][2] + col[0][4] - 1 <= vport[3] + vport[5] - 1))
+           # Проверить пападание правого нижнего угла колонии во viewport
+           # (xc + wc - 1 >= xv and xc + wc - 1 <= xv + wv - 1)
+           # and (yc + hc - 1 >= yv and yc + hc - 1 <= yv + hv - 1)
+            or ((col[0][1] + col[0][3] - 1 >= vport[2]
+                 and col[0][1] + col[0][3] - 1 <= vport[2] + vport[4] - 1)
+                and (col[0][2] + col[0][4] - 1 >= vport[3]
+                     and col[0][2] + col[0][4] - 1 <= vport[3] + vport[5] - 1))
+          # Проверить попадания левого верхнего угла колонии во viewport
+          # (xc >= xv and xc <= xv + wv - 1) 
+          # and (yc >= yv and yc <= yv + hv - 1)
+            or ((col[0][1] >= vport[2] 
+                 and col[0][1] <= vport[2] + vport[4] - 1)
+                and (col[0][2] >= vport[3] 
+                     and col[0][2] <= vport[3] + vport[5] - 1))
+          # Проверить попадение правого верхнего угла колонии во viewport
+          # (xc + wc - 1 >= xv and xc + wc - 1 <= xv + wv - 1)
+          # and (yc >= yv and yc <= yv + hv - 1)
+            or ((col[0][1] + col[0][3] - 1 >= vport[2]
+                 and col[0][1] + col[0][3] - 1 <= vport[2] + vport[4] - 1)
+                and (col[0][2] >= vport[3]
+                     and col[0][2] <= vport[3] + vport[5] - 1))):
+            for yc, row in enumerate(col[1]):
+                yc += col[0][2]
+                for xc, cell in enumerate(row):
+                    # Для каждой живой клетки колонии, проверить попадание во viewport
+                    # (xc >= xv and xc <= xv + wv - 1)
+                    # and (yc >= yv and yc <= yv + hv - 1)
+                    # Найти кординаты клетки в space
+                    xc += col[0][1]
+                    if (cell[0] > 0
+                       and ((xc >= vport[2] 
+                             and xc <= vport[2] + vport[4] - 1)
+                            and (yc >= vport[3]
+                                 and yc <= vport[3] + vport[5] - 1))):
+                        if cell[0] > 9:
+                            cIdx = 0
+                        else:
+                            cIdx = cell[0]
+                        # Найти положение клетки внутри viewport
+                        # xcv = xc - xv
+                        # ycv = yc - yv
+                        # Найти центр окружности которая будет изображать клетку
+                        # Cxcv = xcv * CELL_SIZE + CELL_SIZE / 2
+                        # Cycv = ycv * CELL_SIZE + CELL_SIZE / 2 
+                        pygame.draw.circle(surf,
+                                           c_Cell[cIdx],
+                                           (int((xc - vport[2])*CELL_SIZE + CELL_SIZE / 2),
+                                            int((yc - vport[3])*CELL_SIZE + CELL_SIZE / 2)),
+                                           int(CELL_SIZE / 2))
 
 
 
@@ -308,18 +376,27 @@ def run():
         # [space, screen, x, y, w, h, offset]
         if v_shift != 0 or h_shift != 0:
             w, h = get_space_size(space)
-        if v_shift != 0:
-            vport[3] += v_shift
-            if vport[3] < 0:
-                vport[3] = 0
-            if vport[3] + vport[5] > h:
-                vport[3] = h - vport[5]
-        if h_shift != 0:
-            vport[2] += h_shift
-            if vport[2] < 0:
+            if vport[4] >= w:
                 vport[2] = 0
-            if vport[2] + vport[4] > w:
-                vport[2] = w - vport[4]
+            else:
+                if h_shift != 0:
+                    vport[2] += h_shift
+                    if vport[2] + vport[4] - 1 > w:
+                        vport[2] = w - vport[4]
+                    if vport[2] < 0:
+                        vport[2] = 0
+                
+            if vport[5] >= h:
+                vport[3] = 0
+            else:   
+                if v_shift != 0:
+                    vport[3] += v_shift
+                    if vport[3] + vport[5] - 1 > h:
+                        vport[3] = h - vport[5]
+                    if vport[3] < 0:
+                        vport[3] = 0
+            v_shift = 0
+            h_shift = 0
         
             
 
