@@ -24,8 +24,20 @@ C_VAL_TEXT   = ( 255, 255, 255)
 C_SPLIT_LINE = (   0, 255,   0)
 C_BKGROUND   = (   0,   0,   0)
 
+# Minimap colors
+C_MM_BORDER = ( 128,   0,   0)
+C_MM_SPACE  = (  10,  10,  10)
+C_MM_VPORT  = ( 130, 130, 130)
+C_MM_COLONY = (   0, 255,   0)
+
+
 # Размер одной клетки
 CELL_SIZE = 10
+MINIMAP_SIZE = 150
+
+# Найстройка повторения клавиш
+KEY_DELAY = 100
+KEY_INTERVAL = 100
 
 
 
@@ -39,8 +51,10 @@ def grp_init(size):
     """
     pygame.init()
 
-    screen=pygame.display.set_mode(size)
+    screen=pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.RESIZABLE)
     pygame.display.set_caption("Life Cells demonstration")
+
+    pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
     logging.debug("Graphics initialized")
 
     return screen
@@ -162,12 +176,56 @@ def viewport_init(space, active_col, screen, offset):
 
 
 # TODO: Add scrollbars on the right and bottom side of the screen
-# TODO: Make screen size dynamic
-# TODO: Add minimap in left-bottom angle of the screen 
-#       with viewport and colonies representation
 # TODO: Add positioning of an active colony in the viewport center
 #       on Space-key hit
 # TODO: Add statistics on screen
+
+def draw_minimap(vport, size):
+    surf = vport[1].subsurface(
+            pygame.Rect(0, size[1] - MINIMAP_SIZE - 3,
+                        MINIMAP_SIZE + 3, MINIMAP_SIZE + 3))
+    
+    # Нарисовать space
+    w, h = get_space_size(vport[0])
+    h_offset, v_offset = 0, 0
+    # Определить ширину отступов по бокам либо сверху и снизу
+    # Если ширина space больше чем его высота, то отступы будут сверху и снизу
+    if w > h:
+        # h_offset = (100 - (w / 100) * h) / 2
+        h_offset = int((MINIMAP_SIZE - h / (w / MINIMAP_SIZE)) / 2)
+    # Если высота space больше чем его ширина, то отступы будут слева и справа
+    if h > w:
+        v_offset = int((MINIMAP_SIZE - w / (h / MINIMAP_SIZE)) / 2)
+    pygame.draw.rect(surf, C_MM_SPACE,
+                     pygame.Rect(1 + v_offset, 1 + h_offset, 
+                                 MINIMAP_SIZE - 2 * v_offset, 
+                                 MINIMAP_SIZE - 2 * h_offset))     
+    # Нарисовать рамку viewport
+    if w > h:
+        scale = w / MINIMAP_SIZE
+    else:
+        scale = h / MINIMAP_SIZE
+    pygame.draw.rect(surf, C_MM_VPORT,
+                     pygame.Rect(1 + v_offset + int(vport[2] / scale),
+                                 1 + h_offset + int(vport[3] / scale),
+                                 int(vport[4] / scale),
+                                 int(vport[5] / scale)), 
+                     1)    
+    # Нарисовать рамку minimap
+    pygame.draw.rect(surf, C_MM_BORDER,
+                     pygame.Rect(0, 0, MINIMAP_SIZE + 2, MINIMAP_SIZE + 2), 1)
+
+    # Отобразить все колонии
+    for col in vport[0][2:]:
+        # Поскольку колонии очень малы по отношению к space
+        # отобразить центр колонии
+        # xcc = xc + w / 2
+        # ycc = yc + h / 2
+        xcc = 1 + v_offset + int((col[0][1] + col[0][3] / 2) / scale)
+        ycc = 1 + h_offset + int((col[0][2] + col[0][4] / 2) / scale)
+        pygame.draw.line(surf, C_MM_COLONY,
+                         (xcc, ycc), (xcc, ycc), 1)
+
 
 
 
@@ -319,6 +377,15 @@ def run():
                 done = True
                 continue
 
+            if event.type == pygame.VIDEORESIZE:
+                size = list(event.dict["size"])
+                if size[0] < 700:
+                    size[0] = 700
+                if size[1] < 500:
+                    size[1] = 500    
+                screen = pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.RESIZABLE)
+                vport[1] = screen
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p: # select previous colony as active
                     active_col -= 1
@@ -413,10 +480,10 @@ def run():
         # background image.
         
 
-        # --- Drawing code should go here
-
-        # TODO: Draw all colonies which are in viewport      
+        # --- Drawing code should go here      
         draw_vport(vport, size)
+        draw_minimap(vport, size)
+
 
         # --- Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
