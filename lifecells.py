@@ -87,43 +87,65 @@ def init_space(name = "Universe"):
 
 
 
-def draw_col(screen, x, y, col):
-    """
-    Draws single colony
+def vport_center_on(vport, active_col):
+    if (len(vport[0]) > 2 and active_col >= 0 and active_col <= len(vport[0]) - 3):
+        # Найти центр активной колонии
+        #       xc = col_x + col_w / 2
+        #       yc = col_y + col_h / 2
+        x = int(vport[0][2 + active_col][0][1] + vport[0][2 + active_col][0][3] / 2)
+        y = int(vport[0][2 + active_col][0][2] + vport[0][2 + active_col][0][4] / 2)
+        # Найти левый-верхний край viewport
+        #       xv = xc - vport_w / 2
+        #       yv = yc - vport_h / 2
+        x -= int(vport[4] / 2)
+        y -= int(vport[5] / 2)
+        # Проверить положительность координат левого-верхнего угла viewport
+        # если они отрицательные дать им нулевые значения
+        if x < 0:
+            x = 0
+        if y < 0:
+            y = 0
+        vport[2], vport[3] = x, y 
+        ws, hs = get_space_size(vport[0])
+        if vport[2] + vport[4] > ws:
+            vport[2] = ws - vport[4]
+        if vport[3] + vport[5] > hs:
+            vport[3] = ws - vport[5]
+    else:
+        vport[2], vport[3] = 0, 0
 
-    Draws single colony at given position
-    """
-    c_Cell = [
-              (0, 75, 0),
-              (0, 255, 0),
-              (0, 235, 0),
-              (0, 215, 0),
-              (0, 195, 0),
-              (0, 175, 0),
-              (0, 155, 0),
-              (0, 135, 0),
-              (0, 115, 0),
-              (0, 95, 0),
-             ]
 
-    # pygame.draw.rect(screen, 
-    #                  C_BKGROUND, 
-    #                  (x * 10 + 5, 
-    #                   y * 10 + 5, 
-    #                   (col[0][3] + x) * 10 + 5,
-    #                   (col[0][4] + y) * 10 + 5))
 
-    for yy, row in enumerate(col[1]):
-        for xx, cell in enumerate(row):
-            if cell[0] != 0:
-                if cell[0] > 9:
-                    cIdx = 0
-                else:
-                    cIdx = cell[0]
-                pygame.draw.circle(screen,
-                                   c_Cell[cIdx],
-                                   ((x + xx)*10 + 5, (y + yy)*10 + 5),
-                                   5)
+def update_vport_size(vport):
+    # Получить размеры экрана
+    s_rect = vport[1].get_rect()
+    # Отнять отступы (offsets)
+    w = s_rect.w - vport[6][1] - vport[6][3]
+    h = s_rect.h - vport[6][0] - vport[6][2]
+    # Разделить на размер одной клетки
+    w = int(w / CELL_SIZE)
+    h = int(h / CELL_SIZE)
+    ws, hs = get_space_size(vport[0])
+    if ws < w:
+        w = ws
+    if hs < h:
+        h = hs
+    # Найти левый-верхний край viewport
+    #       xv = xv - (w - vport_w) / 2
+    #       yv = yv - (h - vport_h) / 2
+    vport[2] -= int((w - vport[4]) / 2)
+    vport[3] -= int((h - vport[5]) / 2)
+    vport[4] = w
+    vport[5] = h
+    # Проверить выход viewport за границы экрана
+    if vport[3] < 0:
+        vport[3] = 0
+    if vport[2] < 0:
+        vport[2] = 0
+    if vport[2] + vport[4] > ws:
+        vport[2] = ws - vport[4]
+    if vport[3] + vport[5] > hs:
+        vport[3] = hs - vport[5]
 
 
 
@@ -142,42 +164,19 @@ def viewport_init(space, active_col, screen, offset):
 
     Returns viewport.
     """
-    if len(space) > 2:
-        # Найти центр активной колонии
-        #       xc = col_x + col_w / 2
-        #       yc = col_y + col_h / 2
-        x = int(space[2 + active_col][0][1] + space[2 + active_col][0][3] / 2)
-        y = int(space[2 + active_col][0][2] + space[2 + active_col][0][4] / 2)
-        # Получить размеры экрана
-        s_rect = screen.get_rect()
-        # Отнять отступы (offsets)
-        w = s_rect.w - offset[1] - offset[3]
-        h = s_rect.h - offset[0] - offset[2]
-        # Разделить на размер одной клетки
-        w = int(w / CELL_SIZE)
-        h = int(h / CELL_SIZE)
-        # Найти левый-верхний край viewport
-        #       xv = xc - vport_w / 2
-        #       yv = yc - vport_h / 2
-        x -= int(w / 2)
-        y -= int(h / 2)
-        # Проверить положительность координат левого-верхнего угла viewport
-        # если они отрицательные дать им нулевые значения
-        if x < 0:
-            x = 0
-        if y < 0:
-            y = 0 
-    else:
-        x, y = 0, 0
-    logging.debug("Viewport for space %s created [%d, %d, %d, %d]", space[0], x, y, w, h)
+    vport = [space, screen, 0, 0, 0, 0, offset]
 
-    return [space, screen, x, y, w, h, offset]
+    update_vport_size(vport)
+    vport_center_on(vport, active_col)
+
+    logging.debug("Viewport for space %s created [%d, %d, %d, %d]",
+                  space[0], vport[2], vport[3], vport[4], vport[5])
+
+    return vport
 
 
 
 # TODO: Add scrollbars on the right and bottom side of the screen
-# TODO: Add positioning of an active colony in the viewport center
-#       on Space-key hit
 # TODO: Add statistics on screen
 
 def draw_minimap(vport, size):
@@ -250,7 +249,7 @@ def draw_vport(vport, size):
 
     surf = vport[1].subsurface(
             pygame.Rect(vport[6][3], vport[6][0],
-                        size[0]- vport[6][3] - vport[6][1],
+                        size[0] - vport[6][3] - vport[6][1],
                         size[1] - vport[6][0] - vport[6][2]))
 
     for col in vport[0][2:]:
@@ -377,6 +376,7 @@ def run():
                 done = True
                 continue
 
+            # Обработать событие изменения размеров экрана
             if event.type == pygame.VIDEORESIZE:
                 size = list(event.dict["size"])
                 if size[0] < 700:
@@ -385,7 +385,9 @@ def run():
                     size[1] = 500    
                 screen = pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.RESIZABLE)
                 vport[1] = screen
+                update_vport_size(vport)
 
+            # Обработать нажатия клавиш
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p: # select previous colony as active
                     active_col -= 1
@@ -395,6 +397,8 @@ def run():
                     active_col += 1
                     if active_col > len(space) - 3:
                         active_col = len(space) - 3
+                elif event.key == pygame.K_SPACE:
+                    vport_center_on(vport, active_col)
                 elif event.key == pygame.K_q: # quit 
                     done = True
                     continue
@@ -436,6 +440,8 @@ def run():
                 continue
             if active_col > len(space) - 3:
                 active_col = len(space) - 3
+                update_vport_size(vport)
+                vport_center_on(vport, active_col)
             newDay = False
 
         # Если сдвиг по вертикали(v_shift) либо по горизонтали(h_shift) не равен нулю,
