@@ -154,9 +154,9 @@ def update_vport_size(vport):
         vport[3] = 0
 
     ws, hs = get_space_size(vport[0])
-    if vport[2] + vport[4] > ws:
+    if vport[2] + vport[4] - 1 > ws:
         vport[2] = ws - vport[4]
-    if vport[3] + vport[5] > hs:
+    if vport[3] + vport[5] - 1 > hs:
         vport[3] = hs - vport[5]
 
 
@@ -201,7 +201,7 @@ def draw_minimap(vport):
     surf = vport[1].subsurface(
             pygame.Rect(0, size[1] - MINIMAP_SIZE - 3,
                         MINIMAP_SIZE + 3, MINIMAP_SIZE + 3))
-    
+
     # Нарисовать space
     w, h = get_space_size(vport[0])
     h_offset, v_offset = 0, 0
@@ -316,6 +316,7 @@ def draw_vport(vport):
                              and xc <= vport[2] + vport[4] - 1)
                             and (yc >= vport[3]
                                  and yc <= vport[3] + vport[5] - 1))):
+                        # Определить цвет клетки в зависимости от ее возраста
                         if cell[0] > 9:
                             cIdx = 0
                         else:
@@ -328,8 +329,10 @@ def draw_vport(vport):
                         # Cycv = ycv * CELL_SIZE + CELL_SIZE / 2 
                         pygame.draw.circle(surf,
                                            c_Cell[cIdx],
-                                           (int((xc - vport[2])*CELL_SIZE + CELL_SIZE / 2),
-                                            int((yc - vport[3])*CELL_SIZE + CELL_SIZE / 2)),
+                                           (int((xc - vport[2])*CELL_SIZE
+                                                + CELL_SIZE / 2),
+                                            int((yc - vport[3])*CELL_SIZE
+                                                + CELL_SIZE / 2)),
                                            int(CELL_SIZE / 2))
 
 
@@ -382,7 +385,6 @@ def run():
     curr_speed = 1
     pygame.time.set_timer(pygame.USEREVENT, speed_steps[curr_speed])
     
-
     done = False
     newDay = False
     w, h = 0, 0
@@ -464,12 +466,14 @@ def run():
 
         # --- Game logic should go here
         if newDay:
+            nCol = len(space) - 3
             colony.next_day(space)
             if len(space) < 3:
                 done = True
                 continue
-            if active_col > len(space) - 3:
-                active_col = len(space) - 3
+            if nCol != len(space) - 3:
+                if active_col > len(space) - 3:
+                    active_col = len(space) - 3
                 update_vport_size(vport)
                 vport_center_on(vport, active_col)
             newDay = False
