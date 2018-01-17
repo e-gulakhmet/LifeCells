@@ -19,7 +19,7 @@ import pygame.locals
 import colony
 
 # Define some colors
-C_HDR_TEXT   = (   0,   0,   0)
+C_HDR_TEXT   = ( 255, 242,   0)
 C_VAL_TEXT   = ( 255, 255, 255)
 C_SPLIT_LINE = (   0, 255,   0)
 C_BKGROUND   = (   0,   0,   0)
@@ -49,7 +49,9 @@ E_OFFSET = 30
 S_OFFSET = 30
 W_OFFSET = 0
 
-def grp_init(size):
+SPEED_NAME = ("SLW", "NRM", "FST")
+
+def grp_init(size, spc_name):
     """
     Initializes Graphics.
 
@@ -60,7 +62,7 @@ def grp_init(size):
     pygame.init()
 
     screen=pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.RESIZABLE)
-    pygame.display.set_caption("Life Cells demonstration")
+    pygame.display.set_caption("Life Cells demonstration for space [" + spc_name + "]")
 
     pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
     logging.debug("Graphics initialized")
@@ -188,7 +190,8 @@ def viewport_init(space, active_col, screen, offset):
 
 
 # TODO: Add scrollbars on the right and bottom side of the screen
-# TODO: Add statistics on screen
+# TODO: Show help screen
+
 
 def draw_minimap(vport):
     """
@@ -356,6 +359,72 @@ def get_space_size(space):
 
 
 
+
+def info_space(space, screen, active_col):
+    """
+    Shows space info.
+
+    Shows space size, number of colonies, active colony ID.
+    """
+    s_rect = screen.get_rect()
+
+    surf = screen.subsurface(
+            pygame.Rect(0, 0,
+                        s_rect.w, N_OFFSET))
+    
+    font = pygame.font.SysFont("Consolas", 16)
+
+    # Воспроизвести текст. "True" значит,
+    # что текст будет сглаженным (anti-aliased).
+    # Чёрный - цвет. Переменную black мы задали ранее,
+    # списком [0,0,0]
+    # Заметьте: эта строка создаёт картинку с буквами,
+    # но пока не выводит её на экран.
+    hdr =      font.render("SPC/SZ[                  ] NBR_COLS[      ] ACTV_COL#[  ] AGE_SPC[    ]" , True, C_HDR_TEXT)
+
+    spc_size = get_space_size(space)
+    spc_sz   = font.render("        " + str(spc_size[0]) + " , " + str(spc_size[1]), True, C_VAL_TEXT)
+    nbr_cols = font.render("                                     " + str(len(space) - 2), True, C_VAL_TEXT)
+    actv_col = font.render("                                                       " + str(active_col), True, C_VAL_TEXT)
+    age_spc  = font.render("                                                                   " + str(space[1]), True, C_VAL_TEXT)
+
+    # Вывести сделанную картинку на экран в точке (250, 250)
+    surf.blit(hdr, [10,int((N_OFFSET - 16) / 2)])
+    surf.blit(spc_sz, [10,int((N_OFFSET - 16) / 2)])
+    surf.blit(nbr_cols, [10,int((N_OFFSET - 16) / 2)])
+    surf.blit(actv_col, [10,int((N_OFFSET - 16) / 2)])
+    surf.blit(age_spc, [10,int((N_OFFSET - 16) / 2)])
+
+
+
+def speed_info(screen, speed):
+    """
+    Shows speed.
+
+    Shows speed change of day.
+    """
+    s_rect = screen.get_rect()
+
+    surf = screen.subsurface(
+            pygame.Rect(MINIMAP_SIZE, s_rect.h - S_OFFSET,
+                        s_rect.w - MINIMAP_SIZE, S_OFFSET))
+    
+    font = pygame.font.SysFont("Consolas", 16)
+
+    # Воспроизвести текст. "True" значит,
+    # что текст будет сглаженным (anti-aliased).
+    # Чёрный - цвет. Переменную black мы задали ранее,
+    # списком [0,0,0]
+    # Заметьте: эта строка создаёт картинку с буквами,
+    # но пока не выводит её на экран.
+    hdr_low = font.render("SPD[   ] Q for exit, H for help", True, C_HDR_TEXT)
+    spd     = font.render("    " + SPEED_NAME[speed], True, C_VAL_TEXT)
+
+    surf.blit(hdr_low, [10,int((N_OFFSET - 16) / 2)])
+    surf.blit(spd, [10,int((N_OFFSET - 16) / 2)])
+    
+    
+
 def run():
     """
     Executes application.
@@ -370,7 +439,7 @@ def run():
 
     space = init_space()
 
-    screen = grp_init((SCR_MIN_WIDTH, SCR_MIN_HEIGHT))
+    screen = grp_init((SCR_MIN_WIDTH, SCR_MIN_HEIGHT), space[0])
 
     vport = viewport_init(space, active_col, screen, 
                          (N_OFFSET, E_OFFSET, S_OFFSET, W_OFFSET))
@@ -467,7 +536,6 @@ def run():
                         curr_speed += 1
                         pygame.time.set_timer(pygame.USEREVENT, speed_steps[curr_speed])
 
-
         # --- Game logic should go here
         if newDay:
             nCol = len(space) - 3
@@ -517,30 +585,17 @@ def run():
         # If you want a background image, replace this clear with blit'ing the
         # background image.
         
-
         # --- Drawing code should go here      
         draw_vport(vport)
         draw_minimap(vport)
-
+        info_space(space, screen, active_col)
+        speed_info(screen, curr_speed)
 
         # --- Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
 
         # --- Limit to 60 frames per second
         clock.tick(60)
-
-    #font = pygame.font.Font(None, 25)
-
-    # Воспроизвести текст. "True" значит,
-    # что текст будет сглаженным (anti-aliased).
-    # Чёрный - цвет. Переменную black мы задали ранее,
-    # списком [0,0,0]
-    # Заметьте: эта строка создаёт картинку с буквами,
-    # но пока не выводит её на экран.
-    # text = font.render("My text", True, c_valueTxt)
-
-    # Вывести сделанную картинку на экран в точке (250, 250)
-    # screen.blit(text, [250,250])
 
     # Close the window and quit.
     pygame.quit()
