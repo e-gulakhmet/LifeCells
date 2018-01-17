@@ -396,25 +396,29 @@ def run():
             # Обработать события таймера,
             # запускающего новый день
             if event.type == pygame.USEREVENT:
+                logging.debug("[EVT] New day.")
                 newDay = True
 
             if event.type == pygame.QUIT:
                 done = True
+                logging.debug("[EVT] Quit")
                 continue
 
             # Обработать событие изменения размеров экрана
             if event.type == pygame.VIDEORESIZE:
                 size = list(event.dict["size"])
+                logging.debug("[EVT] Video resize to [%d, %d]", size[0], size[1])
                 if size[0] < SCR_MIN_WIDTH:
                     size[0] = SCR_MIN_WIDTH
                 if size[1] < SCR_MIN_HEIGHT:
-                    size[1] = SCR_MIN_HEIGHT    
+                    size[1] = SCR_MIN_HEIGHT
                 screen = pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.RESIZABLE)
                 vport[1] = screen
                 update_vport_size(vport)
 
             # Обработать нажатия клавиш
             if event.type == pygame.KEYDOWN:
+                logging.debug("[EVT] Key pressed [%s]", pygame.key.name(event.key))
                 if event.key == pygame.K_p: # select previous colony as active
                     active_col -= 1
                     if active_col < 0:
