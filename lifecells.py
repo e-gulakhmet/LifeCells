@@ -46,7 +46,7 @@ SCR_MIN_HEIGHT = 500
 # Отступы экрана
 N_OFFSET = 40
 E_OFFSET = 30
-S_OFFSET = 30
+S_OFFSET = 60
 W_OFFSET = 0
 
 SPEED_NAME = ("SLW", "NRM", "FST")
@@ -372,7 +372,7 @@ def info_space(space, screen, active_col):
             pygame.Rect(0, 0,
                         s_rect.w, N_OFFSET))
     
-    font = pygame.font.SysFont("Consolas", 16)
+    font = pygame.font.SysFont("Consolas", 16, bold = True)
 
     # Воспроизвести текст. "True" значит,
     # что текст будет сглаженным (anti-aliased).
@@ -380,13 +380,13 @@ def info_space(space, screen, active_col):
     # списком [0,0,0]
     # Заметьте: эта строка создаёт картинку с буквами,
     # но пока не выводит её на экран.
-    hdr =      font.render("SPC/SZ[                  ] NBR_COLS[      ] ACTV_COL#[  ] AGE_SPC[    ]" , True, C_HDR_TEXT)
+    hdr =      font.render("SPC_SZ[           ] NBR_COLS[     ] ACTV_COL#[   ] AGE_SPC[    ]" , True, C_HDR_TEXT)
 
     spc_size = get_space_size(space)
     spc_sz   = font.render("        " + str(spc_size[0]) + " , " + str(spc_size[1]), True, C_VAL_TEXT)
-    nbr_cols = font.render("                                     " + str(len(space) - 2), True, C_VAL_TEXT)
-    actv_col = font.render("                                                       " + str(active_col), True, C_VAL_TEXT)
-    age_spc  = font.render("                                                                   " + str(space[1]), True, C_VAL_TEXT)
+    nbr_cols = font.render("                              " + str(len(space) - 2), True, C_VAL_TEXT)
+    actv_col = font.render("                                               " + str(active_col), True, C_VAL_TEXT)
+    age_spc  = font.render("                                                            " + str(space[1]), True, C_VAL_TEXT)
 
     # Вывести сделанную картинку на экран в точке (250, 250)
     surf.blit(hdr, [10,int((N_OFFSET - 16) / 2)])
@@ -394,6 +394,8 @@ def info_space(space, screen, active_col):
     surf.blit(nbr_cols, [10,int((N_OFFSET - 16) / 2)])
     surf.blit(actv_col, [10,int((N_OFFSET - 16) / 2)])
     surf.blit(age_spc, [10,int((N_OFFSET - 16) / 2)])
+
+    pygame.draw.line(surf, C_HDR_TEXT, (2, N_OFFSET - 4), (s_rect.w - 2, N_OFFSET - 4), 2)
 
 
 
@@ -409,7 +411,7 @@ def speed_info(screen, speed):
             pygame.Rect(MINIMAP_SIZE, s_rect.h - S_OFFSET,
                         s_rect.w - MINIMAP_SIZE, S_OFFSET))
     
-    font = pygame.font.SysFont("Consolas", 16)
+    font = pygame.font.SysFont("Consolas", 16, bold = True)
 
     # Воспроизвести текст. "True" значит,
     # что текст будет сглаженным (anti-aliased).
@@ -420,10 +422,12 @@ def speed_info(screen, speed):
     hdr_low = font.render("SPD[   ] Q for exit, H for help", True, C_HDR_TEXT)
     spd     = font.render("    " + SPEED_NAME[speed], True, C_VAL_TEXT)
 
-    surf.blit(hdr_low, [10,int((N_OFFSET - 16) / 2)])
-    surf.blit(spd, [10,int((N_OFFSET - 16) / 2)])
+    surf.blit(hdr_low, [10,int((N_OFFSET - 4))])
+    surf.blit(spd, [10,int((N_OFFSET - 4))])
     
+    pygame.draw.line(surf, C_HDR_TEXT, (2, 30), (s_rect.w - MINIMAP_SIZE - 2, 30), 2)
     
+
 
 def run():
     """
