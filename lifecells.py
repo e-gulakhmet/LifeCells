@@ -30,6 +30,10 @@ C_MM_SPACE  = (  10,  10,  10)
 C_MM_VPORT  = ( 130, 130, 130)
 C_MM_COLONY = (   0, 255,   0)
 
+# Scrollbar colors
+C_SB_END    = (255, 242,   0)
+C_SB_LINE   = C_SB_END
+C_SB_RUNNER = (255, 255, 255)
 
 # Размер одной клетки
 CELL_SIZE = 10
@@ -46,10 +50,13 @@ KEY_INTERVAL = 100
 SCR_MIN_WIDTH = 700
 SCR_MIN_HEIGHT = 500
 
+# Размер полосы прокрутки
+SBAR_SIZE = 30
+
 # Отступы экрана
 N_OFFSET = 40
 E_OFFSET = 30
-S_OFFSET = 60
+S_OFFSET = 30 + SBAR_SIZE + 4
 W_OFFSET = 0
 
 SPEED_NAME = ("SLW", "NRM", "FST")
@@ -424,10 +431,11 @@ def speed_info(screen, speed):
     hdr_low = font.render("SPD[   ] Q for exit, H for help", True, C_HDR_TEXT)
     spd     = font.render("    " + SPEED_NAME[speed], True, C_VAL_TEXT)
 
-    surf.blit(hdr_low, [10,int((30 - 16) / 2) + 30])
-    surf.blit(spd, [10,int((30 - 16) / 2) + 30])
+    surf.blit(hdr_low, [10,int((30 - 16) / 2) + SBAR_SIZE + 4])
+    surf.blit(spd, [10,int((30 - 16) / 2) + SBAR_SIZE + 4])
     
-    pygame.draw.line(surf, C_HDR_TEXT, (2, 30), (s_rect.w - MINIMAP_SIZE - 2, 30), 2)
+    pygame.draw.line(surf, C_HDR_TEXT, (2, SBAR_SIZE + 4),
+                     (s_rect.w - MINIMAP_SIZE - 2, SBAR_SIZE + 4), 2)
 
 
 
@@ -470,6 +478,53 @@ def draw_help(screen):
         surf.blit(h_key, [15, v_txt])
         surf.blit(h_hint, [60, v_txt])
         v_txt += 16 + 2
+
+
+
+def draw_hscroll(vport):
+    """
+    Draw horizontal scrollbar.
+    """
+    screen = vport[1]
+    s_rect = screen.get_rect()
+    sfw = s_rect.w - MINIMAP_SIZE
+    surf = screen.subsurface(
+             pygame.Rect(MINIMAP_SIZE, s_rect.h - S_OFFSET,
+                         sfw, SBAR_SIZE))
+    # Нарисовать левую стрелку
+    pygame.draw.polygon(surf, C_SB_END, [(2, int(SBAR_SIZE / 2)),
+                                         (int(SBAR_SIZE / 2) + 2, 0),
+                                         (int(SBAR_SIZE / 2) + 2, SBAR_SIZE)], 2)
+    # Нарисовать правую стрелку
+    pygame.draw.polygon(surf, C_SB_END, [(sfw - int(SBAR_SIZE / 2) - 2, 0),
+                                         (sfw - 2, int(SBAR_SIZE / 2)),
+                                         (sfw - int(SBAR_SIZE / 2) - 2, SBAR_SIZE)], 2)
+    # Нарисовать ленту
+    pygame.draw.line(surf, C_SB_END,
+                     (SBAR_SIZE + 2, int(SBAR_SIZE / 2)),
+                     (sfw - SBAR_SIZE - 2, int(SBAR_SIZE / 2)), 2)
+    # Нарисовать бегунок
+    xr = get_hrunner_pos(vport) - MINIMAP_SIZE
+    pygame.draw.circle(surf, C_BKGROUND, (xr,
+                                          int(SBAR_SIZE / 2)), int(SBAR_SIZE / 2))
+    pygame.draw.circle(surf, C_SB_RUNNER, (xr,
+                                           int(SBAR_SIZE / 2)),
+                       int(SBAR_SIZE / 2) - 4, 2)
+
+
+
+def get_hrunner_pos(vport):
+    """
+    Calculate position of center of the hrunner
+    """
+    w, h = get_space_size(vport[0])
+    s_rect = vport[1].get_rect()
+    sfw = s_rect.w - MINIMAP_SIZE
+    # Рассчитать масштаб
+    # масштаб = реальный размер объекта / на размер его представления  
+    scale = (w - vport[4]) / (sfw - SBAR_SIZE * 2 - 4)
+
+    return MINIMAP_SIZE + int(vport[2] / scale) + SBAR_SIZE + 2
 
 
 
@@ -534,6 +589,31 @@ def run():
                 screen = pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.RESIZABLE)
                 vport[1] = screen
                 update_vport_size(vport)
+
+            # Обработать нажатия мыши
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+                s_rect = screen.get_rect()
+                # Проверить попадание мыши в горизотальный скроллбар
+                if (mx >= MINIMAP_SIZE + 2 and mx <= s_rect.w and
+                    my >= s_rect.h - S_OFFSET and s_rect.h - S_OFFSET + SBAR_SIZE):
+                    xr = get_hrunner_pos(vport)
+                    # Проверяем попадание в левый треугольник
+                    if mx >= MINIMAP_SIZE + 2 and mx <= MINIMAP_SIZE + 2 + int(SBAR_SIZE / 2):
+                        h_shift -= 1
+                    # Проверяем попадание в правый треугольник
+                    elif mx >= s_rect.w - int(SBAR_SIZE / 2) + 2 and mx <= s_rect.w:
+                        h_shift += 1
+                    # Проверяем попадание мыши на ленту слева от бегунка
+                    elif mx >= MINIMAP_SIZE + SBAR_SIZE + 2 and mx <= xr - int(SBAR_SIZE / 2):
+                        h_shift -= 10
+                    # Проверяем попадание мыши на ленту справа от бугунка
+                    elif mx >= xr - int(SBAR_SIZE / 2) and mx <= s_rect.w - SBAR_SIZE:
+                        h_shift +=10
+                    else:
+                        pass
+                    
+
 
             # Обработать нажатия клавиш
             if event.type == pygame.KEYDOWN:
@@ -647,6 +727,7 @@ def run():
         speed_info(screen, curr_speed)
         if help:
             draw_help(screen)
+        draw_hscroll(vport)
 
         # --- Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
