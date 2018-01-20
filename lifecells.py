@@ -35,6 +35,9 @@ C_MM_COLONY = (   0, 255,   0)
 CELL_SIZE = 10
 MINIMAP_SIZE = 150
 
+# Размер окна помощи
+HWND_SIZE = (200, 154)
+
 # Найстройка повторения клавиш
 KEY_DELAY = 100
 KEY_INTERVAL = 100
@@ -190,7 +193,6 @@ def viewport_init(space, active_col, screen, offset):
 
 
 # TODO: Add scrollbars on the right and bottom side of the screen
-# TODO: Show help screen
 
 
 def draw_minimap(vport):
@@ -422,11 +424,53 @@ def speed_info(screen, speed):
     hdr_low = font.render("SPD[   ] Q for exit, H for help", True, C_HDR_TEXT)
     spd     = font.render("    " + SPEED_NAME[speed], True, C_VAL_TEXT)
 
-    surf.blit(hdr_low, [10,int((N_OFFSET - 4))])
-    surf.blit(spd, [10,int((N_OFFSET - 4))])
+    surf.blit(hdr_low, [10,int((30 - 16) / 2) + 30])
+    surf.blit(spd, [10,int((30 - 16) / 2) + 30])
     
     pygame.draw.line(surf, C_HDR_TEXT, (2, 30), (s_rect.w - MINIMAP_SIZE - 2, 30), 2)
+
+
+
+def draw_help(screen):
+    """
+    Shows help screen.
+    """
+    s_rect = screen.get_rect()
+    surf = screen.subsurface(
+             pygame.Rect(5, N_OFFSET + 5, HWND_SIZE[0], HWND_SIZE[1]))
+
+    font = pygame.font.SysFont("Consolas", 16, bold = True)
+    # Рисуем рамку
+    pygame.draw.rect(surf, C_MM_SPACE, (0, 0, HWND_SIZE[0], HWND_SIZE[1]))
+    pygame.draw.rect(surf, C_HDR_TEXT, (2, 10,
+                                        HWND_SIZE[0] - 4, HWND_SIZE[1] - 25), 2)
+    nm_win = font.render(" Help ", True, C_VAL_TEXT)
+    sz_txt = nm_win.get_rect()
+    pygame.draw.rect(surf, C_MM_SPACE, (2 + int((HWND_SIZE[0] - sz_txt.w) / 2),
+                                        2, sz_txt.w, sz_txt.h))
+    surf.blit(nm_win, [2 + int((HWND_SIZE[0] - sz_txt.w) / 2), 2])
+
+    nm_win = font.render(" ESC to close ", True, C_VAL_TEXT)
+    sz_txt = nm_win.get_rect()
+    pygame.draw.rect(surf, C_MM_SPACE, (2 + int((HWND_SIZE[0] - sz_txt.w) / 2),
+                                        (HWND_SIZE[1] - sz_txt.h) - 5, sz_txt.w, sz_txt.h))
+    surf.blit(nm_win, [2 + int((HWND_SIZE[0] - sz_txt.w) / 2), (HWND_SIZE[1] - sz_txt.h) - 5])
     
+    # Вывести помощь в управлении
+    h_txt = [["F", "Faster"],
+             ["S", "Slower"],
+             ["N", "Next colony"],
+             ["P", "Prev. colony"],
+             ["SPC", "Center vport"],
+             ["←↑→↓", "Move vport"]]
+    v_txt = 22
+    for h_line in h_txt:
+        h_key = font.render(h_line[0], True, C_HDR_TEXT)
+        h_hint = font.render(h_line[1], True, C_VAL_TEXT)
+        surf.blit(h_key, [15, v_txt])
+        surf.blit(h_hint, [60, v_txt])
+        v_txt += 16 + 2
+
 
 
 def run():
@@ -461,6 +505,8 @@ def run():
     done = False
     newDay = False
     w, h = 0, 0
+    
+    help = False
     # -------- Main Program Loop -----------
     while not done:
 
@@ -530,6 +576,11 @@ def run():
                         v_shift += 10
                     else:
                         v_shift += 1
+                
+                elif event.key == pygame.K_h: # open help window
+                    help = True
+                elif event.key == pygame.K_ESCAPE: # close help window
+                    help = False
 
                 elif event.key == pygame.K_s:   # make speed slower
                     if curr_speed > 0:
@@ -594,6 +645,8 @@ def run():
         draw_minimap(vport)
         info_space(space, screen, active_col)
         speed_info(screen, curr_speed)
+        if help:
+            draw_help(screen)
 
         # --- Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
