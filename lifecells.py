@@ -528,6 +528,52 @@ def get_hrunner_pos(vport):
 
 
 
+def draw_vscroll(vport):
+    """
+    Draw vertical scrollbar.
+    """
+    screen = vport[1]
+    s_rect = screen.get_rect()
+    sfh = s_rect.h - N_OFFSET - S_OFFSET - 60
+    surf = screen.subsurface(
+             pygame.Rect(s_rect.w - E_OFFSET, N_OFFSET + 30,
+                         SBAR_SIZE, sfh))
+    # Нарисовать верхнюю стрелку
+    pygame.draw.polygon(surf, C_SB_END, [(int(SBAR_SIZE / 2), 2),
+                                         (0, int(SBAR_SIZE / 2) + 2),
+                                         (SBAR_SIZE, int(SBAR_SIZE / 2) + 2)], 2)
+    # Нарисовать нижнюю стрелку
+    pygame.draw.polygon(surf, C_SB_END, [(int(SBAR_SIZE / 2), sfh - 2),
+                                         (0, sfh - int(SBAR_SIZE / 2) - 2),
+                                         (SBAR_SIZE, sfh - int(SBAR_SIZE / 2) - 2)], 2)
+    # Нарисовать ленту
+    pygame.draw.line(surf, C_SB_END,
+                     (int(SBAR_SIZE / 2), SBAR_SIZE),
+                     (int(SBAR_SIZE / 2), sfh - SBAR_SIZE - 2), 2)
+    # Нарисовать бегунок
+    yr = get_vrunner_pos(vport) - (N_OFFSET + 30) 
+    pygame.draw.circle(surf, C_BKGROUND, (int(SBAR_SIZE / 2),
+                                          yr), int(SBAR_SIZE / 2))
+    pygame.draw.circle(surf, C_SB_RUNNER, (int(SBAR_SIZE / 2),
+                                           yr),
+                       int(SBAR_SIZE / 2) - 4, 2)
+
+
+def get_vrunner_pos(vport):
+    """
+    Calculate position of center of the vrunner
+    """
+    w, h = get_space_size(vport[0])
+    s_rect = vport[1].get_rect()
+    sfh = s_rect.h - N_OFFSET - S_OFFSET - 60
+    # Рассчитать масштаб
+    # масштаб = реальный размер объекта / на размер его представления  
+    scale = (h - vport[5]) / (sfh - SBAR_SIZE * 2 - 4)
+
+    return N_OFFSET + 30 + int(vport[3] / scale) + SBAR_SIZE + 2
+    
+
+
 def run():
     """
     Executes application.
@@ -612,7 +658,27 @@ def run():
                         h_shift +=10
                     else:
                         pass
-                    
+                # Проверить попадение мыши в веритикальный скроллбар
+                elif (mx >= s_rect.w - SBAR_SIZE and mx <= s_rect.w and
+                      my >= N_OFFSET + 30 and my <= s_rect.h - S_OFFSET - 30):
+                    yr = get_vrunner_pos(vport)
+                    # Проверяем попадание мыши в верхний треугольник
+                    if my >= N_OFFSET + 30 and my <= N_OFFSET + 30 + SBAR_SIZE:
+                        v_shift -= 1
+                    # Проверяем попадание мыши в нижний треугольник
+                    elif (my >= s_rect.h - S_OFFSET - 30 - SBAR_SIZE and
+                          my <= s_rect.h - S_OFFSET - 30):
+                        v_shift += 1
+                    # Проверяем попадание мыши на ленту сверху от бегунка 
+                    elif my >= N_OFFSET + 30 + SBAR_SIZE and my <= yr - int(SBAR_SIZE / 2):
+                        v_shift -= 10
+                    # Проверяем попадение мыши на ленту снизу от бегунка
+                    elif (my >= yr + int(SBAR_SIZE / 2) and
+                          my <= s_rect.h - S_OFFSET - 30 - SBAR_SIZE):
+                        v_shift += 10
+                    else:
+                        pass
+
 
 
             # Обработать нажатия клавиш
@@ -728,6 +794,7 @@ def run():
         if help:
             draw_help(screen)
         draw_hscroll(vport)
+        draw_vscroll(vport)
 
         # --- Go ahead and update the screen with what we've drawn.
         pygame.display.flip()
