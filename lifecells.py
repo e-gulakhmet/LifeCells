@@ -607,6 +607,9 @@ def run():
     help = False
     h_runner = False
     v_runner = False
+    
+    full_screen = False
+    prev_screen_size = screen.get_rect()
     # -------- Main Program Loop -----------
     while not done:
 
@@ -728,7 +731,21 @@ def run():
                 elif event.key == pygame.K_q: # quit 
                     done = True
                     continue
-
+                elif event.key == pygame.K_RETURN:
+                    if pygame.key.get_mods() & pygame.KMOD_ALT:
+                        if full_screen:
+                            screen = pygame.display.set_mode((prev_screen_size.w, prev_screen_size.h), pygame.DOUBLEBUF | pygame.RESIZABLE)
+                            vport[1] = screen
+                            update_vport_size(vport)
+                            full_screen = False
+                        else:
+                            prev_screen_size = screen.get_rect()
+                            screen = pygame.display.set_mode((1920, 1080), pygame.FULLSCREEN)
+                            vport[1] = screen
+                            update_vport_size(vport)
+                            full_screen = True
+                            
+                            
                 elif event.key == pygame.K_UP:   # shift viewport up
                     if pygame.key.get_mods() & pygame.KMOD_CTRL:
                         v_shift -= 10
