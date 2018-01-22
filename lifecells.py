@@ -199,9 +199,6 @@ def viewport_init(space, active_col, screen, offset):
 
 
 
-# TODO: Add scrollbars on the right and bottom side of the screen
-
-
 def draw_minimap(vport):
     """
     Draws a minimap
@@ -608,6 +605,8 @@ def run():
     w, h = 0, 0
     
     help = False
+    h_runner = False
+    v_runner = False
     # -------- Main Program Loop -----------
     while not done:
 
@@ -636,8 +635,33 @@ def run():
                 vport[1] = screen
                 update_vport_size(vport)
 
+            if event.type == pygame.MOUSEBUTTONUP:
+                h_runner, v_runner = False, False
+            
+            if event.type == pygame.MOUSEMOTION:
+                if h_runner or v_runner:
+                    mx, my = pygame.mouse.get_rel()
+                    w, h = get_space_size(space)
+                    s_rect = screen.get_rect()
+
+                if h_runner:
+                    sfw = s_rect.w - MINIMAP_SIZE
+                    # Рассчитать масштаб
+                    # масштаб = реальный размер объекта / на размер его представления  
+                    scale = (w - vport[4]) / (sfw - SBAR_SIZE * 2 - 4)
+                    h_shift += int(mx * scale)
+                
+                if v_runner:
+                    sfh = s_rect.h - N_OFFSET - S_OFFSET - 60
+                    # Рассчитать масштаб
+                    # масштаб = реальный размер объекта / на размер его представления  
+                    scale = (h - vport[5]) / (sfh - SBAR_SIZE * 2 - 4)
+                    v_shift += int(my * scale)
+
+
+
             # Обработать нажатия мыши
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if (event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]):
                 mx, my = pygame.mouse.get_pos()
                 s_rect = screen.get_rect()
                 # Проверить попадание мыши в горизотальный скроллбар
@@ -654,10 +678,12 @@ def run():
                     elif mx >= MINIMAP_SIZE + SBAR_SIZE + 2 and mx <= xr - int(SBAR_SIZE / 2):
                         h_shift -= 10
                     # Проверяем попадание мыши на ленту справа от бугунка
-                    elif mx >= xr - int(SBAR_SIZE / 2) and mx <= s_rect.w - SBAR_SIZE:
+                    elif mx >= xr + int(SBAR_SIZE / 2) and mx <= s_rect.w - SBAR_SIZE:
                         h_shift +=10
                     else:
-                        pass
+                        pygame.mouse.get_rel()
+                        h_runner = True
+                
                 # Проверить попадение мыши в веритикальный скроллбар
                 elif (mx >= s_rect.w - SBAR_SIZE and mx <= s_rect.w and
                       my >= N_OFFSET + 30 and my <= s_rect.h - S_OFFSET - 30):
@@ -677,7 +703,8 @@ def run():
                           my <= s_rect.h - S_OFFSET - 30 - SBAR_SIZE):
                         v_shift += 10
                     else:
-                        pass
+                        pygame.mouse.get_rel()
+                        v_runner = True
 
 
 
