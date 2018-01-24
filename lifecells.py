@@ -14,9 +14,13 @@
 # offset - Отступы в точках от границ экрана
 
 import logging
+import os.path
+
 import pygame
 import pygame.locals
+
 import colony
+
 
 # Define some colors
 C_HDR_TEXT   = ( 255, 242,   0)
@@ -571,7 +575,7 @@ def get_vrunner_pos(vport):
     
 
 
-def run():
+def run(space = None):
     """
     Executes application.
 
@@ -583,7 +587,8 @@ def run():
     # viewPort shift
     v_shift, h_shift = 0, 0
 
-    space = init_space()
+    if space == None:   
+        space = init_space()
 
     screen = grp_init((SCR_MIN_WIDTH, SCR_MIN_HEIGHT), space[0])
 
@@ -861,8 +866,14 @@ def main():
     logging.basicConfig(filename="lifecells.log",
                         level=logging.ERROR,
                         format="%(asctime)s [%(levelname)s] : %(message)s")
-     
-    run()
+
+    if os.path.isfile("lifecells.lcsf"):
+        with open("lifecells.lcsf") as f:
+            space = colony.load_from_file(f) 
+    else:
+        space = None
+
+    run(space)
 
 
 

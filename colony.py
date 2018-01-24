@@ -60,6 +60,10 @@ import random
 import sys
 import logging
 from functools import reduce
+import os.path
+
+max_w = 1000
+max_h = 1000 
 
 ###############################################################################
 # Space functions
@@ -80,6 +84,84 @@ def new_space(name):
 
 
 
+def load_from_file(file):
+    """
+    Create space from file
+
+    Create space from file formatted accordingly LifeCellSpaceFile(Look lifecells.lcsf)
+
+    Return new space with colonies constructed from LCSF file
+    """
+    spc = False
+    col = False
+    col_lines = []
+    for line in file:
+        line = line.strip()
+        if len(line) == 0 or line[0] == '#':
+            continue
+        line = line.split('#')[0]
+        #print(line)
+        # Обработать определение пространства
+        # Space: name w h
+        if line.find("Space:") == 0:
+            if spc:
+                continue
+            line = line[len("Space:"):]
+            spc_params = line.split()
+            if len(spc_params) > 0:
+                spc_name = spc_params[0]
+                w, h = 1000, 1000
+                if len(spc_params) >= 2:
+                    if spc_params[1].isdecimal():
+                        w = int(spc_params[1])
+                if len(spc_params) == 3:
+                    if spc_params[2].isdecimal():
+                        h = int(spc_params[2])
+                max_w = w
+                max_h = h
+                space = new_space(spc_name)
+                spc = True
+        # Обработать определение колонии
+        # Colony: x, y
+        elif line.find("Colony:") == 0:
+            if not spc:
+                print("Space is not defined yet. Could not add a colony.")
+                continue
+            if len(line) >= len("Colony:"):
+                # Проверить считывали ли мы данные о колонии и, если да, то создать её 
+                if len(col_lines) > 0:
+                    print(x, y)
+                    add_colony(space, col_lines, x, y)
+                    col_lines = []
+                # Определить параметры Colony
+                line = line[len("Colony:"):]
+                col_params = line.split(',')
+                if col_params[0].strip().isdecimal():
+                    x = int(col_params[0])
+                else:
+                    x = -1
+                if len(col_params) == 2 and col_params[1].strip().isdecimal():
+                    y = int(col_params[1])
+                else:
+                    y = -1
+            else:
+                x, y = -1, -1
+            col = True
+        elif col and len(set(line) - {'1','0'}) == 0:
+            col_lines.append(line)
+
+    # Завершить создание колонии если мы достигли конца файла        
+    if len(col_lines) > 0:
+        print(x, y)
+        add_colony(space, col_lines, x, y)
+
+    if not spc:
+        return None
+
+    return space
+
+
+
 def add_colony(space, col_mask = [], x = -1, y = -1):
     """
     Add an empty colony to the space
@@ -92,9 +174,9 @@ def add_colony(space, col_mask = [], x = -1, y = -1):
     Returns updated space
     """
     if x == -1:
-        x = int(random.random()*1000)
+        x = int(random.random()*max_w)
     if y == -1:
-        y = int(random.random()*1000)
+        y = int(random.random()*max_h)
     space.append([
                   [0,
                    x,
@@ -655,21 +737,26 @@ def main():
     logging.basicConfig(filename="lifecells.log",
                         level=logging.DEBUG,
                         format="%(asctime)s [%(levelname)s] : %(message)s")
-     
-    space = new_space("Universe")
+    
+    if os.path.isfile("lifecells.lcsf"):
+        with open("lifecells.lcsf") as f:
+            space = load_from_file(f)
+    else:
+        space = new_space("Universe")
 
-    col1 = ["00111",
-            "011011",
-            "1100011",
-            "011011",
-            "00111"]
+        col1 = ["00111",
+                "011011",
+                "1100011",
+                "011011",
+                "00111"]
 
-    col2 = ["111"]
+        col2 = ["111"]
 
-    space = add_colony(space, col1)
-    space = add_colony(space, col2)
+        space = add_colony(space, col1)
+        space = add_colony(space, col2)
 
-    run(space, 12)
+    if space != None:
+        run(space, 12)
 
 
 
