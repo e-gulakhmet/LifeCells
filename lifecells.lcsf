@@ -1,0 +1,60 @@
+# universe.lcsf
+#
+# This file contains definition of Space named Universe
+#
+# dr-dobermann
+# 
+# Every line in the file could consists of comment or value.
+# if line starts from '#' it means a comment line
+# Comment also could be added at the end of the value line.
+# The part of the line including the comment sign will be ignored.
+# All leading and trailing whitespaces will be removed in value lines.
+
+# Definition of space
+# Every file should start from the name of the space.
+# There is only one space definition allowed in the file.
+# Format for space name definition as followed:
+# Space: <Space_Name>, width, height
+# Parameters width and height are optional and could be ommitted.
+# w, h do not restrict the size of the space, this parameters
+# are used only as randomizator multiplier.
+Space: Universe  # Define a space named Universe
+
+# Every space could have an unlimited amount of colonies
+# Colony describes as a header and a bunch of mask string defining 
+# positions of live and empty cells.
+# Header of the colony has format as followed:
+# Colony: x, y
+# It is possible to ommit x or y coordinate of the colony origin.
+# If one of the origin parameters is empty, it would be changed 
+# by a random value. If only x ommitted, the comma sign should precede y value.
+# Colony: , y
+#
+# After the colony header mask lines follow.
+# Mask line has format as followed:
+# 00100100
+# This line describes a live cells in 3rd and 6th positions. 
+# Others represent empty cells positions
+# Due to the width of the colony automatically recalculated,
+# the mask string widths for a single colony should not be equal.
+
+Colony:
+0001111000
+0011001100
+0110000110
+1100000011
+0110000110
+0011001100
+0001111000
+
+Colony: 2,2
+111
+
+Colony: 10,
+1
+1
+1
+
+Colony: ,20
+0111
+1110
