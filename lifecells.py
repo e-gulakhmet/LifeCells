@@ -21,7 +21,6 @@ import pygame.locals
 
 import colony
 
-
 # Define some colors
 C_HDR_TEXT   = ( 255, 242,   0)
 C_VAL_TEXT   = ( 255, 255, 255)
@@ -76,7 +75,8 @@ def grp_init(size, spc_name):
     pygame.init()
 
     screen=pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.RESIZABLE)
-    pygame.display.set_caption("Life Cells demonstration for space [" + spc_name + "]")
+    pygame.display.set_caption("Life Cells demonstration for space ["
+                                + spc_name + "]")
 
     pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
     logging.debug("Graphics initialized")
@@ -119,8 +119,10 @@ def vport_center_on(vport, active_col):
         # Найти центр активной колонии
         #       xc = col_x + col_w / 2
         #       yc = col_y + col_h / 2
-        x = int(vport[0][2 + active_col][0][1] + vport[0][2 + active_col][0][3] / 2)
-        y = int(vport[0][2 + active_col][0][2] + vport[0][2 + active_col][0][4] / 2)
+        x = int(vport[0][2 + active_col][0][1]
+                + vport[0][2 + active_col][0][3] / 2)
+        y = int(vport[0][2 + active_col][0][2]
+                + vport[0][2 + active_col][0][4] / 2)
         # Найти левый-верхний край viewport
         #       xv = xc - vport_w / 2
         #       yv = yc - vport_h / 2
@@ -291,7 +293,8 @@ def draw_vport(vport):
 
     for col in vport[0][2:]:
         # Проверить попадание левого нижнего угла колонии во viewport
-        # (xc <= xv + wv - 1 and xc >= xv) and (yc + hc - 1 >= yv and yc + hc - 1 <= yv + hv - 1)
+        # (xc <= xv + wv - 1 and xc >= xv) and
+        # (yc + hc - 1 >= yv and yc + hc - 1 <= yv + hv - 1)
         if (((col[0][1] <= vport[2] + vport[4] - 1 and col[0][1] >= vport[2])
              and (col[0][2] + col[0][4] - 1 >= vport[3] 
                   and col[0][2] + col[0][4] - 1 <= vport[3] + vport[5] - 1))
@@ -319,7 +322,8 @@ def draw_vport(vport):
             for yc, row in enumerate(col[1]):
                 yc += col[0][2]
                 for xc, cell in enumerate(row):
-                    # Для каждой живой клетки колонии, проверить попадание во viewport
+                    # Для каждой живой клетки колонии,
+                    # проверить попадание во viewport
                     # (xc >= xv and xc <= xv + wv - 1)
                     # and (yc >= yv and yc <= yv + hv - 1)
                     # Найти кординаты клетки в space
@@ -337,7 +341,8 @@ def draw_vport(vport):
                         # Найти положение клетки внутри viewport
                         # xcv = xc - xv
                         # ycv = yc - yv
-                        # Найти центр окружности которая будет изображать клетку
+                        # Найти центр окружности
+                        # которая будет изображать клетку
                         # Cxcv = xcv * CELL_SIZE + CELL_SIZE / 2
                         # Cycv = ycv * CELL_SIZE + CELL_SIZE / 2 
                         pygame.draw.circle(surf,
@@ -390,13 +395,18 @@ def info_space(space, screen, active_col):
     # списком [0,0,0]
     # Заметьте: эта строка создаёт картинку с буквами,
     # но пока не выводит её на экран.
-    hdr =      font.render("SPC_SZ[           ] NBR_COLS[     ] ACTV_COL#[   ] AGE_SPC[    ]" , True, C_HDR_TEXT)
+    hdr =      font.render("SPC_SZ[           ] NBR_COLS[     ] ACTV_COL#[   ] AGE_SPC[    ]" ,
+                           True, C_HDR_TEXT)
 
     spc_size = get_space_size(space)
-    spc_sz   = font.render("        " + str(spc_size[0]) + " , " + str(spc_size[1]), True, C_VAL_TEXT)
-    nbr_cols = font.render("                              " + str(len(space) - 2), True, C_VAL_TEXT)
-    actv_col = font.render("                                               " + str(active_col), True, C_VAL_TEXT)
-    age_spc  = font.render("                                                            " + str(space[1]), True, C_VAL_TEXT)
+    spc_sz   = font.render("        " + str(spc_size[0]) + " , " + str(spc_size[1]),
+                           True, C_VAL_TEXT)
+    nbr_cols = font.render("                              " + str(len(space) - 2),
+                           True, C_VAL_TEXT)
+    actv_col = font.render("                                               "
+                           + str(active_col), True, C_VAL_TEXT)
+    age_spc  = font.render("                                                            "
+                           + str(space[1]), True, C_VAL_TEXT)
 
     # Вывести сделанную картинку на экран в точке (250, 250)
     surf.blit(hdr, [10,int((N_OFFSET - 16) / 2)])
@@ -405,7 +415,8 @@ def info_space(space, screen, active_col):
     surf.blit(actv_col, [10,int((N_OFFSET - 16) / 2)])
     surf.blit(age_spc, [10,int((N_OFFSET - 16) / 2)])
 
-    pygame.draw.line(surf, C_HDR_TEXT, (2, N_OFFSET - 4), (s_rect.w - 2, N_OFFSET - 4), 2)
+    pygame.draw.line(surf, C_HDR_TEXT, (2, N_OFFSET - 4),
+                    (s_rect.w - 2, N_OFFSET - 4), 2)
 
 
 
@@ -452,7 +463,8 @@ def draw_help(screen):
     # Рисуем рамку
     pygame.draw.rect(surf, C_MM_SPACE, (0, 0, HWND_SIZE[0], HWND_SIZE[1]))
     pygame.draw.rect(surf, C_HDR_TEXT, (2, 10,
-                                        HWND_SIZE[0] - 4, HWND_SIZE[1] - 25), 2)
+                                        HWND_SIZE[0] - 4, HWND_SIZE[1] - 25),
+                     2)
     nm_win = font.render(" Help ", True, C_VAL_TEXT)
     sz_txt = nm_win.get_rect()
     pygame.draw.rect(surf, C_MM_SPACE, (2 + int((HWND_SIZE[0] - sz_txt.w) / 2),
@@ -462,8 +474,10 @@ def draw_help(screen):
     nm_win = font.render(" ESC to close ", True, C_VAL_TEXT)
     sz_txt = nm_win.get_rect()
     pygame.draw.rect(surf, C_MM_SPACE, (2 + int((HWND_SIZE[0] - sz_txt.w) / 2),
-                                        (HWND_SIZE[1] - sz_txt.h) - 5, sz_txt.w, sz_txt.h))
-    surf.blit(nm_win, [2 + int((HWND_SIZE[0] - sz_txt.w) / 2), (HWND_SIZE[1] - sz_txt.h) - 5])
+                                        (HWND_SIZE[1] - sz_txt.h) - 5,
+                     sz_txt.w, sz_txt.h))
+    surf.blit(nm_win, [2 + int((HWND_SIZE[0] - sz_txt.w) / 2),
+                       (HWND_SIZE[1] - sz_txt.h) - 5])
     
     # Вывести помощь в управлении
     h_txt = [["F", "Faster"],
@@ -495,11 +509,13 @@ def draw_hscroll(vport):
     # Нарисовать левую стрелку
     pygame.draw.polygon(surf, C_SB_END, [(2, int(SBAR_SIZE / 2)),
                                          (int(SBAR_SIZE / 2) + 2, 0),
-                                         (int(SBAR_SIZE / 2) + 2, SBAR_SIZE)], 2)
+                                         (int(SBAR_SIZE / 2) + 2, SBAR_SIZE)],
+                        2)
     # Нарисовать правую стрелку
     pygame.draw.polygon(surf, C_SB_END, [(sfw - int(SBAR_SIZE / 2) - 2, 0),
                                          (sfw - 2, int(SBAR_SIZE / 2)),
-                                         (sfw - int(SBAR_SIZE / 2) - 2, SBAR_SIZE)], 2)
+                                         (sfw - int(SBAR_SIZE / 2)
+                                          - 2, SBAR_SIZE)], 2)
     # Нарисовать ленту
     pygame.draw.line(surf, C_SB_END,
                      (SBAR_SIZE + 2, int(SBAR_SIZE / 2)),
@@ -507,7 +523,8 @@ def draw_hscroll(vport):
     # Нарисовать бегунок
     xr = get_hrunner_pos(vport) - MINIMAP_SIZE
     pygame.draw.circle(surf, C_BKGROUND, (xr,
-                                          int(SBAR_SIZE / 2)), int(SBAR_SIZE / 2))
+                                          int(SBAR_SIZE / 2)),
+                                          int(SBAR_SIZE / 2))
     pygame.draw.circle(surf, C_SB_RUNNER, (xr,
                                            int(SBAR_SIZE / 2)),
                        int(SBAR_SIZE / 2) - 4, 2)
@@ -522,7 +539,7 @@ def get_hrunner_pos(vport):
     s_rect = vport[1].get_rect()
     sfw = s_rect.w - MINIMAP_SIZE
     # Рассчитать масштаб
-    # масштаб = реальный размер объекта / на размер его представления  
+    # масштаб = реальный размер объекта / на размер его представления
     scale = (w - vport[4]) / (sfw - SBAR_SIZE * 2 - 4)
 
     return MINIMAP_SIZE + int(vport[2] / scale) + SBAR_SIZE + 2
@@ -542,11 +559,13 @@ def draw_vscroll(vport):
     # Нарисовать верхнюю стрелку
     pygame.draw.polygon(surf, C_SB_END, [(int(SBAR_SIZE / 2), 2),
                                          (0, int(SBAR_SIZE / 2) + 2),
-                                         (SBAR_SIZE, int(SBAR_SIZE / 2) + 2)], 2)
+                                         (SBAR_SIZE,
+                                          int(SBAR_SIZE / 2) + 2)], 2)
     # Нарисовать нижнюю стрелку
     pygame.draw.polygon(surf, C_SB_END, [(int(SBAR_SIZE / 2), sfh - 2),
                                          (0, sfh - int(SBAR_SIZE / 2) - 2),
-                                         (SBAR_SIZE, sfh - int(SBAR_SIZE / 2) - 2)], 2)
+                                         (SBAR_SIZE,
+                                          sfh - int(SBAR_SIZE / 2) - 2)], 2)
     # Нарисовать ленту
     pygame.draw.line(surf, C_SB_END,
                      (int(SBAR_SIZE / 2), SBAR_SIZE),
@@ -560,6 +579,7 @@ def draw_vscroll(vport):
                        int(SBAR_SIZE / 2) - 4, 2)
 
 
+
 def get_vrunner_pos(vport):
     """
     Calculate position of center of the vrunner
@@ -568,7 +588,7 @@ def get_vrunner_pos(vport):
     s_rect = vport[1].get_rect()
     sfh = s_rect.h - N_OFFSET - S_OFFSET - 60
     # Рассчитать масштаб
-    # масштаб = реальный размер объекта / на размер его представления  
+    # масштаб = реальный размер объекта / на размер его представления 
     scale = (h - vport[5]) / (sfh - SBAR_SIZE * 2 - 4)
 
     return N_OFFSET + 30 + int(vport[3] / scale) + SBAR_SIZE + 2
@@ -634,12 +654,15 @@ def run(space = None):
             # Обработать событие изменения размеров экрана
             if event.type == pygame.VIDEORESIZE:
                 size = list(event.dict["size"])
-                logging.debug("[EVT] Video resize to [%d, %d]", size[0], size[1])
+                logging.debug("[EVT] Video resize to [%d, %d]",
+                              size[0], size[1])
                 if size[0] < SCR_MIN_WIDTH:
                     size[0] = SCR_MIN_WIDTH
                 if size[1] < SCR_MIN_HEIGHT:
                     size[1] = SCR_MIN_HEIGHT
-                screen = pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.RESIZABLE)
+                screen = pygame.display.set_mode(size,
+                                                 pygame.DOUBLEBUF |
+                                                 pygame.RESIZABLE)
                 vport[1] = screen
                 update_vport_size(vport)
 
@@ -655,43 +678,80 @@ def run(space = None):
                 if h_runner:
                     sfw = s_rect.w - MINIMAP_SIZE
                     # Рассчитать масштаб
-                    # масштаб = реальный размер объекта / на размер его представления  
+                    # масштаб = реальный размер объекта / на размер
+                    # его представления
                     scale = (w - vport[4]) / (sfw - SBAR_SIZE * 2 - 4)
                     h_shift += int(mx * scale)
                 
                 if v_runner:
                     sfh = s_rect.h - N_OFFSET - S_OFFSET - 60
                     # Рассчитать масштаб
-                    # масштаб = реальный размер объекта / на размер его представления  
+                    # масштаб = реальный размер объекта / на размер
+                    # его представления 
                     scale = (h - vport[5]) / (sfh - SBAR_SIZE * 2 - 4)
                     v_shift += int(my * scale)
 
-
-
             # Обработать нажатия мыши
-            if (event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]):
+            if (event.type == pygame.MOUSEBUTTONDOWN and
+                pygame.mouse.get_pressed()[0]):
                 mx, my = pygame.mouse.get_pos()
                 s_rect = screen.get_rect()
                 # Проверить попадание мыши в горизотальный скроллбар
                 if (mx >= MINIMAP_SIZE + 2 and mx <= s_rect.w and
-                    my >= s_rect.h - S_OFFSET and s_rect.h - S_OFFSET + SBAR_SIZE):
+                    my >= s_rect.h - S_OFFSET and
+                    s_rect.h - S_OFFSET + SBAR_SIZE):
                     xr = get_hrunner_pos(vport)
                     # Проверяем попадание в левый треугольник
-                    if mx >= MINIMAP_SIZE + 2 and mx <= MINIMAP_SIZE + 2 + int(SBAR_SIZE / 2):
+                    if (mx >= MINIMAP_SIZE + 2 and
+                        mx <= MINIMAP_SIZE + 2 + int(SBAR_SIZE / 2)):
                         h_shift -= 1
                     # Проверяем попадание в правый треугольник
-                    elif mx >= s_rect.w - int(SBAR_SIZE / 2) + 2 and mx <= s_rect.w:
+                    elif (mx >= s_rect.w - int(SBAR_SIZE / 2) + 2 and
+                         mx <= s_rect.w):
                         h_shift += 1
                     # Проверяем попадание мыши на ленту слева от бегунка
-                    elif mx >= MINIMAP_SIZE + SBAR_SIZE + 2 and mx <= xr - int(SBAR_SIZE / 2):
+                    elif (mx >= MINIMAP_SIZE + SBAR_SIZE + 2 and
+                          mx <= xr - int(SBAR_SIZE / 2)):
                         h_shift -= 10
                     # Проверяем попадание мыши на ленту справа от бугунка
-                    elif mx >= xr + int(SBAR_SIZE / 2) and mx <= s_rect.w - SBAR_SIZE:
+                    elif (mx >= xr + int(SBAR_SIZE / 2) and
+                          mx <= s_rect.w - SBAR_SIZE):
                         h_shift +=10
                     else:
                         pygame.mouse.get_rel()
                         h_runner = True
                 
+                # Проверить попадание мыши в minimap
+                elif (mx >= 1 and mx <= MINIMAP_SIZE + 3 and
+                      my >= s_rect.h - MINIMAP_SIZE - 3 and
+                      my <= s_rect.h - 1):
+                    # Найти значения x, y курсора внутри minimap
+                    mmx = mx
+                    mmy = my - (s_rect.h - MINIMAP_SIZE)
+                    w, h = get_space_size(space)
+                    h_offset, v_offset = 0, 0
+                    scale = 0.0
+                    if w > h:
+                        scale = w / MINIMAP_SIZE
+                        v_offset = int((MINIMAP_SIZE - (h / scale)) / 2)
+                    else:
+                        scale = h / MINIMAP_SIZE
+                        h_offset = int((MINIMAP_SIZE - (w / scale)) / 2)
+                    mmx -= h_offset
+                    mmy -= v_offset
+                    vx = int(mmx * scale)
+                    vy = int(mmy * scale)
+                    if vx < 0:
+                        vx = 0
+                    elif vx + vport[4] > w:
+                        vx = w - vport[4]
+                    if vy < 0:
+                        vy = 0
+                    elif vy + vport[5] > h:
+                        vy = h - vport[5]
+                    vport[2] = vx
+                    vport[3] = vy
+
                 # Проверить попадение мыши в веритикальный скроллбар
                 elif (mx >= s_rect.w - SBAR_SIZE and mx <= s_rect.w and
                       my >= N_OFFSET + 30 and my <= s_rect.h - S_OFFSET - 30):
@@ -704,7 +764,8 @@ def run(space = None):
                           my <= s_rect.h - S_OFFSET - 30):
                         v_shift += 1
                     # Проверяем попадание мыши на ленту сверху от бегунка 
-                    elif my >= N_OFFSET + 30 + SBAR_SIZE and my <= yr - int(SBAR_SIZE / 2):
+                    elif (my >= N_OFFSET + 30 + SBAR_SIZE and
+                          my <= yr - int(SBAR_SIZE / 2)):
                         v_shift -= 10
                     # Проверяем попадение мыши на ленту снизу от бегунка
                     elif (my >= yr + int(SBAR_SIZE / 2) and
@@ -714,21 +775,22 @@ def run(space = None):
                         pygame.mouse.get_rel()
                         v_runner = True
 
-
-
             # Обработать нажатия клавиш
             if event.type == pygame.KEYDOWN:
-                logging.debug("[EVT] Key pressed [%s]", pygame.key.name(event.key))
+                logging.debug("[EVT] Key pressed [%s]",
+                              pygame.key.name(event.key))
                 if event.key == pygame.K_p: # select previous colony as active
                     active_col -= 1
                     if active_col < 0:
                         active_col = 0
+                    vport_center_on(vport, active_col)
 
                 elif event.key == pygame.K_n: # select next colony as active
                     active_col += 1
                     if active_col > len(space) - 3:
                         active_col = len(space) - 3
-
+                    vport_center_on(vport, active_col)
+                
                 # center viewport on the active_col
                 elif event.key == pygame.K_SPACE: 
                     vport_center_on(vport, active_col)
@@ -739,17 +801,20 @@ def run(space = None):
                 elif event.key == pygame.K_RETURN:
                     if pygame.key.get_mods() & pygame.KMOD_ALT:
                         if full_screen:
-                            screen = pygame.display.set_mode((prev_screen_size.w, prev_screen_size.h), pygame.DOUBLEBUF | pygame.RESIZABLE)
+                            screen = pygame.display.set_mode(
+                                        (prev_screen_size.w,
+                                         prev_screen_size.h),
+                                        pygame.DOUBLEBUF | pygame.RESIZABLE)
                             vport[1] = screen
                             update_vport_size(vport)
                             full_screen = False
                         else:
                             prev_screen_size = screen.get_rect()
-                            screen = pygame.display.set_mode((1920, 1080), pygame.FULLSCREEN)
+                            screen = pygame.display.set_mode((1920, 1080),
+                                                             pygame.FULLSCREEN)
                             vport[1] = screen
                             update_vport_size(vport)
                             full_screen = True
-                            
                             
                 elif event.key == pygame.K_UP:   # shift viewport up
                     if pygame.key.get_mods() & pygame.KMOD_CTRL:
@@ -780,11 +845,13 @@ def run(space = None):
                 elif event.key == pygame.K_s:   # make speed slower
                     if curr_speed > 0:
                         curr_speed -= 1
-                        pygame.time.set_timer(pygame.USEREVENT, speed_steps[curr_speed])
+                        pygame.time.set_timer(pygame.USEREVENT,
+                                              speed_steps[curr_speed])
                 elif event.key == pygame.K_f:   # make speed faster
                     if curr_speed < 2:
                         curr_speed += 1
-                        pygame.time.set_timer(pygame.USEREVENT, speed_steps[curr_speed])
+                        pygame.time.set_timer(pygame.USEREVENT,
+                                              speed_steps[curr_speed])
 
         # --- Game logic should go here
         if newDay:
@@ -800,7 +867,8 @@ def run(space = None):
                 vport_center_on(vport, active_col)
             newDay = False
 
-        # Если сдвиг по вертикали(v_shift) либо по горизонтали(h_shift) не равен нулю,
+        # Если сдвиг по вертикали(v_shift)
+        # либо по горизонтали(h_shift) не равен нулю,
         # сдвинуть viewport на необходимое количество клеток
         # [space, screen, x, y, w, h, offset]
         if v_shift != 0 or h_shift != 0:

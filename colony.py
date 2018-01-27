@@ -152,7 +152,6 @@ def load_from_file(file):
 
     # Завершить создание колонии если мы достигли конца файла        
     if len(col_lines) > 0:
-        print(x, y)
         add_colony(space, col_lines, x, y)
 
     if not spc:
