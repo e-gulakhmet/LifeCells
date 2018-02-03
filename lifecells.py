@@ -632,6 +632,7 @@ def run(space = None):
     help = False
     h_runner = False
     v_runner = False
+    mm_move = False
     
     full_screen = False
     prev_screen_size = screen.get_rect()
@@ -668,9 +669,10 @@ def run(space = None):
 
             if event.type == pygame.MOUSEBUTTONUP:
                 h_runner, v_runner = False, False
+                mm_move = False
             
             if event.type == pygame.MOUSEMOTION:
-                if h_runner or v_runner:
+                if h_runner or v_runner or mm_move:
                     mx, my = pygame.mouse.get_rel()
                     w, h = get_space_size(space)
                     s_rect = screen.get_rect()
@@ -689,6 +691,14 @@ def run(space = None):
                     # масштаб = реальный размер объекта / на размер
                     # его представления 
                     scale = (h - vport[5]) / (sfh - SBAR_SIZE * 2 - 4)
+                    v_shift += int(my * scale)
+                
+                if mm_move:
+                    if h > w:
+                        scale = h / MINIMAP_SIZE
+                    else:
+                        scale = w / MINIMAP_SIZE 
+                    h_shift += int(mx * scale)
                     v_shift += int(my * scale)
 
             # Обработать нажатия мыши
@@ -717,6 +727,8 @@ def run(space = None):
                     elif (mx >= xr + int(SBAR_SIZE / 2) and
                           mx <= s_rect.w - SBAR_SIZE):
                         h_shift +=10
+                    # При попадание в бегунок ставим флаг что курсор
+                    # находится на бегунке
                     else:
                         pygame.mouse.get_rel()
                         h_runner = True
@@ -751,6 +763,9 @@ def run(space = None):
                         vy = h - vport[5]
                     vport[2] = vx
                     vport[3] = vy
+
+                    pygame.mouse.get_rel()
+                    mm_move = True
 
                 # Проверить попадение мыши в веритикальный скроллбар
                 elif (mx >= s_rect.w - SBAR_SIZE and mx <= s_rect.w and
